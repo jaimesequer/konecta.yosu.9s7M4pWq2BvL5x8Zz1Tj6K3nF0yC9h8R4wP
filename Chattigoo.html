@@ -3746,14 +3746,10 @@ function art12_copiarPlantillaLarga() {
 
 <div id="contenedorDesplazamiento_v2" style="font-family: Arial, sans-serif; width: 100%; line-height: 1.5; font-size: 15px; text-align: left; margin: 20px 0 0 0;">
     
-    <div style="margin-bottom: 5px; padding-left: 3px;">
-        <label id="lbl_fijo_v2" style="font-weight: bold; color: #2d6df6;">Además del traslado del vehículo, ¿requiere también transporte para usted?</label>
-    </div>
-    
-    <div style="font-style: italic; color: #555; margin-bottom: 15px;">Nota: No es obligatorio responder todas las preguntas en un solo mensaje.</div>
+    <div style="font-style: italic; color: #555; margin-bottom: 15px; padding-left: 3px;">Nota: No es obligatorio responder todas las preguntas en un solo mensaje.</div>
     
     <div style="margin-left: 15px; border-left: 2px solid #ddd; padding-left: 10px; margin-top: 10px;">
-        <div style="font-size: 13px; color: #777; font-weight: bold; margin-bottom: 8px;">*Opciones adicionales a incluir:*</div>
+        <div style="font-size: 13px; color: #777; font-weight: bold; margin-bottom: 8px;">*Opciones a incluir:*</div>
 
         <div style="margin-bottom: 8px;">
             <input type="checkbox" id="desp1_v2" checked class="opc-desplazamiento-v2" style="margin-right: 5px; vertical-align: middle;"> 
@@ -3804,22 +3800,17 @@ function alternarCheckboxesDesplazamiento_v2() {
 }
 
 function copiarPlantillaDesplazamiento_v2() {
-    let textoFinal = "*" + document.getElementById('lbl_fijo_v2').innerText.trim() + "*\r\n" +
-                     "Nota: No es obligatorio responder todas las preguntas en un solo mensaje.\r\n\r\n";
+    // Se removió el lbl_fijo del texto inicial
+    let textoFinal = "Nota: No es obligatorio responder todas las preguntas en un solo mensaje.\r\n\r\n";
 
     const checkboxes = document.querySelectorAll('.opc-desplazamiento-v2');
     let numeroPregunta = 1; 
-    let agregoEncabezadoSub = false;
 
     checkboxes.forEach((cb) => {
         if (cb.checked) {
             let textoLabel = document.querySelector('label[for="' + cb.id + '"]').innerText.trim();
             
-            if (!agregoEncabezadoSub) {
-                textoFinal += "*Solo responder en caso de que sí requieres el desplazamiento:*\r\n";
-                agregoEncabezadoSub = true;
-            }
-
+            // Ya no se agrega el encabezado condicional aquí
             textoFinal += numeroPregunta + ". " + textoLabel + "\r\n";
             numeroPregunta++;
         }
@@ -3850,10 +3841,7 @@ function copiarPlantillaDesplazamiento_v2() {
 
 
 
-
-
 <br> <br>
-
 <div id="contenedorDatosAsg_v2" style="font-family: Arial, sans-serif; width: 100%; line-height: 1.5; font-size: 15px; text-align: left; margin: 20px 0 0 0;">
     
     <div style="margin-bottom: 5px;"><strong>*Me ayudas con las respuestas de estos datos, para poder solicitar el servicio, por favor.*</strong></div>
@@ -3885,7 +3873,7 @@ function copiarPlantillaDesplazamiento_v2() {
     </div>
 
     <div style="margin-bottom: 8px;">
-        <input type="checkbox" id="asg4_v2" class="opc-asg-v2" style="margin-right: 5px; vertical-align: middle;"> 
+        <input type="checkbox" id="asg4_v2" checked class="opc-asg-v2" style="margin-right: 5px; vertical-align: middle;"> 
         <label for="asg4_v2" style="cursor: pointer; vertical-align: middle;">¿Qué daño presenta el vehículo y cuáles son las partes afectadas?:</label>
     </div>
 
@@ -3913,7 +3901,7 @@ function copiarPlantillaDesplazamiento_v2() {
         <label for="asg7_sub_v2" style="cursor: pointer; vertical-align: middle; color: #555;">¿Qué tipo de bloqueo presenta el vehículo?:</label>
     </div>
     <div style="margin-bottom: 8px;">
-        <input type="checkbox" id="asg7_fotos_v2" checked class="opc-asg-v2" style="margin-right: 5px; vertical-align: middle;"> 
+        <input type="checkbox" id="asg7_fotos_v2" class="opc-asg-v2" style="margin-right: 5px; vertical-align: middle;"> 
         <label for="asg7_fotos_v2" style="cursor: pointer; vertical-align: middle;">¿Puede enviarnos fotografías del estado del vehículo y condiciones de la vía?:</label>
     </div>
     <div style="margin-bottom: 8px;">
@@ -3950,13 +3938,18 @@ function copiarPlantillaDesplazamiento_v2() {
         <label for="asg6_v2" style="cursor: pointer; vertical-align: middle;">¿Me puede confirmar si el vehículo está en un lugar de fácil acceso para la grúa?:</label>
     </div>
 
+    <div style="margin-bottom: 8px;">
+        <input type="checkbox" id="asg6_pasajeros_v2" checked class="opc-asg-v2" style="margin-right: 5px; vertical-align: middle;"> 
+        <label for="asg6_pasajeros_v2" style="cursor: pointer; vertical-align: middle;">Además del traslado del vehículo, ¿requiere también transporte para usted?:</label>
+    </div>
+
     <div style="margin-top: 15px; margin-bottom: 8px;">
         <input type="checkbox" id="asg_dir1_v2" class="opc-asg-v2" style="margin-right: 5px; vertical-align: middle;"> 
         <label for="asg_dir1_v2" style="cursor: pointer; vertical-align: middle; font-weight: bold;">¿Me indica la ciudad y dirección de donde la grúa recogerá el vehículo? Para dejar donde llegará el servicio y alguna referencia, como alguna tienda o estación de servicios que esté a tu vista. (Si no conoce el lugar, me envía su ubicación actual desde la opción de WhatsApp):</label>
     </div>
     <div style="margin-bottom: 8px;">
         <input type="checkbox" id="asg_dir2_v2" class="opc-asg-v2" style="margin-right: 5px; vertical-align: middle;"> 
-        <label for="asg_dir2_v2" style="cursor: pointer; vertical-align: middle; font-weight: bold;">¿Me confirmas la ciudad y dirección destino donde llevaría la grúa el vehículo?, además de una referencia, por favor:</label>
+        <label for="asg_dir2_v2" style="cursor: pointer; vertical-align: middle; font-weight: bold;">¿Me confiras la ciudad y dirección destino donde llevaría la grúa el vehículo?, además de una referencia, por favor:</label>
     </div>
 
     <div style="margin-top: 15px; text-align: left;">
@@ -4028,7 +4021,6 @@ function copyPlantillaAsg_v2() {
     document.body.removeChild(areaTemporal);
 }
 </script>
-
 
 	
 
