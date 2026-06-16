@@ -9162,7 +9162,7 @@ function ejecutarCopiadoNativo(texto) {
 // Función única para calcular la hora con el intervalo requerido (+124 min redondeado a :00 o :30)
 function calcularHoraDisponibilidad() {
     const fecha = new Date();
-    fecha.setMinutes(fecha.getMinutes() + 124); // 2h 4min
+    fecha.setMinutes(fecha.getMinutes() + 121); // 2h 1min
     
     let min = fecha.getMinutes();
     if (min === 0) {
