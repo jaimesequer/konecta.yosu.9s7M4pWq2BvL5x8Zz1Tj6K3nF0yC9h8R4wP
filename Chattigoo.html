@@ -9103,6 +9103,7 @@ function ejecutarCopiadoNativo(texto) {
 
 
 
+
 <div id="contenedorDatosAsg_v20" style="font-family: Arial, sans-serif; width: 100%; line-height: 1.5; font-size: 15px; text-align: left; margin: 0;">
     
     <div style="margin-bottom: 5px;"><strong id="lbl_tituloAsg_v20">*Me ayudas con las respuestas de estos datos, para poder solicitar el servicio, por favor.*</strong></div>
@@ -9145,7 +9146,7 @@ function ejecutarCopiadoNativo(texto) {
 
     <div style="margin-bottom: 8px;">
         <input type="checkbox" id="asg_dir2_v20" class="opc-asg-v20" style="margin-right: 5px; vertical-align: middle;"> 
-        <label for="asg_dir2_v20" style="cursor: pointer; vertical-align: middle; font-weight: bold;">¿Me confirmas la ciudad y dirección destino donde usted llegaría con el servicio a bordo?, además de una referencia, por favor.</label>
+        <label for="asg_dir2_v20" style="cursor: pointer; vertical-align: middle; font-weight: bold;">¿Me confiras la ciudad y dirección destino donde usted llegaría con el servicio a bordo?, además de una referencia, por favor.</label>
     </div>
 
     <div style="margin-top: 15px; text-align: left;">
@@ -9158,27 +9159,34 @@ function ejecutarCopiadoNativo(texto) {
 </div>
 
 <script>
-window.onload = function() {
-    // Sumar 130 minutos (2h 10m)
+// Función única para calcular la hora con el intervalo requerido (+124 min redondeado a :00 o :30)
+function calcularHoraDisponibilidad() {
     const fecha = new Date();
-    fecha.setMinutes(fecha.getMinutes() + 130);
+    fecha.setMinutes(fecha.getMinutes() + 124); // 2h 4min
     
-    // Encontrar el siguiente intervalo de :00 o :30
     let min = fecha.getMinutes();
     if (min === 0) {
-        // Ya es en punto, pero queremos el PRÓXIMO (:30)
         fecha.setMinutes(30);
     } else if (min > 0 && min <= 30) {
-        // Está entre :01 y :30, saltamos a :30
         fecha.setMinutes(30);
     } else {
-        // Está entre :31 y :59, saltamos a la siguiente hora :00
         fecha.setMinutes(0);
         fecha.setHours(fecha.getHours() + 1);
     }
 
-    const horaFormateada = fecha.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit', hour12: true });
+    return fecha.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+// Actualiza la etiqueta visible en la página en tiempo real
+function actualizarEtiquetaHora() {
+    const horaFormateada = calcularHoraDisponibilidad();
     document.getElementById('lbl_hora_v20').innerText = "Importante: Por ahora, tenemos disponibilidad desde las " + horaFormateada;
+}
+
+window.onload = function() {
+    actualizarEtiquetaHora();
+    // Re-calcula y actualiza visualmente cada 1 segundo para mantener la página al día en tiempo real
+    setInterval(actualizarEtiquetaHora, 1000);
 };
 
 function alternarCheckboxesAsg_v20() {
@@ -9197,6 +9205,9 @@ function copiarPlantillaAsg_v20() {
     let numeroPregunta = 1;
     let saltoInsertado = false;
 
+    // Se calcula la hora exacta en este preciso instante al hacer clic
+    const horaAlCopiar = calcularHoraDisponibilidad();
+
     checkboxes.forEach((cb) => {
         if (cb.checked) {
             let textoLabel = document.querySelector('label[for="' + cb.id + '"]').innerText.trim();
@@ -9207,7 +9218,8 @@ function copiarPlantillaAsg_v20() {
             }
 
             if (cb.id === 'asg_hora_v20') {
-                textoFinal += textoLabel + "\r\n";
+                // Forzamos a que use la hora calculada en tiempo real en este instante
+                textoFinal += "Importante: Por ahora, tenemos disponibilidad desde las " + horaAlCopiar + "\r\n";
             } else {
                 textoFinal += numeroPregunta + ". " + textoLabel + "\r\n";
                 numeroPregunta++;
@@ -9227,6 +9239,9 @@ function copiarPlantillaAsg_v20() {
     }
 }
 </script>
+
+
+	 
 
 
 <br> <br>
