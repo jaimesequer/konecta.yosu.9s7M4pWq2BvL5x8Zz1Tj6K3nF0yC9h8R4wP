@@ -41,85 +41,54 @@
 
     </div>
 
+    <iframe id="iframe_bypass" name="iframe_bypass" style="display: none;"></iframe>
+
     <script>
-    // Variables completamente vacías. Si no carga de Google, se quedan vacías.
     let responsableNombre = "";
     let responsableEmail = "";
 
-    // Callback para la ruta alternativa (archivos locales / evasión de CORS)
-    function miCallbackGlobal(datos) {
-        if (datos && (datos.nombre || datos.correo)) {
-            responsableNombre = datos.nombre ? datos.nombre.toString().trim() : "";
-            responsableEmail = datos.correo ? datos.correo.toString().trim() : "";
-            actualizarInterfaz(responsableNombre, responsableEmail);
-        } else {
-            mostrarErrorAlineacion();
+    // Escuchamos de forma segura la transmisión de datos que enviará el iframe
+    window.addEventListener("message", function(evento) {
+        if (evento.data && (evento.data.nombre || evento.data.correo)) {
+            responsableNombre = evento.data.nombre ? evento.data.nombre.toString().trim() : "";
+            responsableEmail = datos = evento.data.correo ? evento.data.correo.toString().trim() : "";
+            
+            const infoVisual = document.getElementById('info_turno_visual');
+            if (responsableNombre || responsableEmail) {
+                infoVisual.innerText = `${responsableNombre} / ${responsableEmail}`;
+            } else {
+                infoVisual.innerText = "Celdas A2 o B2 vacías en Sheets";
+            }
         }
-    }
+    }, false);
 
-    function actualizarInterfaz(nombre, correo) {
-        const infoVisual = document.getElementById('info_turno_visual');
-        if (nombre || correo) {
-            infoVisual.innerText = `${nombre} / ${correo}`;
-        } else {
-            infoVisual.innerText = "Celda vacía en Sheets";
-        }
-    }
-
-    function mostrarErrorAlineacion() {
-        const contenedor = document.getElementById('contenedor_turno');
-        const infoVisual = document.getElementById('info_turno_visual');
-        
-        contenedor.style.backgroundColor = "#fff5f5";
-        contenedor.style.borderLeftColor = "#e53e3e";
-        infoVisual.style.color = "#e53e3e";
-        infoVisual.innerText = "Error: No se pudo conectar con Google Sheets";
-    }
-
-    async function cargarTurnoDesdeScript() {
+    function cargarTurnoSeguro() {
         const urlBase = 'https://script.google.com/macros/s/AKfycbzSN-QUK3tNsK2QEQiL456542OYa1sDjeiQN9tCc1vUm7FesvVqwgmTzGsk4yXYqLr-8A/exec';
-        const cacheBuster = `_=${new Date().getTime()}`;
+        const cacheBuster = `${urlBase}?_=${new Date().getTime()}`;
         
-        try {
-            // Intento 1: Fetch directo estándar
-            const response = await fetch(`${urlBase}?${cacheBuster}`);
-            if (!response.ok) throw new Error("Error de red");
-            
-            const datos = await response.json();
-            responsableNombre = datos.nombre ? datos.nombre.toString().trim() : "";
-            responsableEmail = datos.correo ? datos.correo.toString().trim() : "";
-            
-            actualizarInterfaz(responsableNombre, responsableEmail);
-            
-        } catch (e) {
-            // Intento 2: Ruta bypass por tag script (esencial para archivos locales 'file:///')
-            const scriptAlternativo = document.createElement('script');
-            scriptAlternativo.src = `${urlBase}?callback=miCallbackGlobal&${cacheBuster}`;
-            
-            const timeoutFailsafe = setTimeout(() => {
-                if (document.getElementById('info_turno_visual').innerText === "Consultando a Google Sheets...") {
-                    mostrarErrorAlineacion();
-                }
-            }, 5000); // 5 segundos de espera máxima antes de declarar error de conexión
-            
-            scriptAlternativo.onerror = () => {
-                clearTimeout(timeoutFailsafe);
-                mostrarErrorAlineacion();
-            };
-            
-            scriptAlternativo.onload = () => clearTimeout(timeoutFailsafe);
-            document.body.appendChild(scriptAlternativo);
-        }
+        // Forzamos al iframe a navegar a la URL directamente, evadiendo las restricciones JavaScript corporativas
+        document.getElementById('iframe_bypass').src = cacheBuster;
+        
+        // Temporizador de seguridad: si la red muere del todo en 7 segundos, da el aviso
+        setTimeout(() => {
+            const infoVisual = document.getElementById('info_turno_visual');
+            if (infoVisual.innerText === "Consultando a Google Sheets...") {
+                const contenedor = document.getElementById('contenedor_turno');
+                contenedor.style.backgroundColor = "#fff5f5";
+                contenedor.style.borderLeftColor = "#e53e3e";
+                infoVisual.style.color = "#e53e3e";
+                infoVisual.innerText = "Error: La red bloqueó la conexión con Google";
+            }
+        }, 7000);
     }
 
-    // Inicializar la carga apenas abra el documento
-    cargarTurnoDesdeScript();
+    // Ejecutar la conexión forzada al iniciar la página
+    cargarTurnoSeguro();
 
     function enviarEmailCartaNoReclamacionVacia() {
         const paraFinal = document.getElementById('email_para_cnr').value.trim();
         const asuntoTxt = `Solicitud - Carta de No Reclamación`;
         
-        // Si las variables están vacías, no enviará datos fantasma
         const responsableFinal = (responsableNombre || responsableEmail) 
             ? `${responsableNombre} / ${responsableEmail}` 
             : "(No se cargó responsable de turno)";
