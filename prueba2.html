@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Prueba de Conexión</title>
+</head>
+<body>
+    <h1>Estado de la Conexión</h1>
+    <div id="resultado">Esperando...</div>
+
+    <script>
+        const URL = "https://script.google.com/macros/s/AKfycbwD0UpUNIjivijsxw98aYcT_8SrETfKU_oktDxirweY3bZg0Zc0-MDRAEAv80reW1lleQ/exec";
+        
+        fetch(URL)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('resultado').innerText = "Nombre: " + data.nombre + " | Correo: " + data.correo;
+            })
+            .catch(err => {
+                document.getElementById('resultado').innerText = "Error: " + err;
+                console.error(err);
+            });
+    </script>
+</body>
+</html>
