@@ -27,34 +27,40 @@
 </div>
 
 <script>
-    // --- CONFIGURACIÓN AUTOMÁTICA ---
+    // --- CONFIGURACIÓN ---
     const SHEET_ID = '13acbMD8c-OO8aMIz6Tiuf2kJAxwcxO6J5ymKp6LYHnY';
     const HOJA = "Antioquia";
     const CELDA_NOMBRE = "Q6";
     const CELDA_CORREO = "Q8";
 
-    let datosContacto = { nombre: "Cargando...", correo: "Cargando..." };
+    let datosContacto = { nombre: "No encontrado", correo: "No encontrado" };
 
- async function cargarDatos() {
+    async function cargarDatos() {
         try {
+            // Construimos las URLs para cada celda
             const urlNombre = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tq=SELECT%20A&range=${CELDA_NOMBRE}&sheet=${HOJA}`;
-            const res = await fetch(urlNombre);
-            const text = await res.text();
-            
-            // Extraer el JSON del formato GVIZ (quitar el envoltorio)
-            const jsonText = text.substring(47, text.length - 2);
-            const json = JSON.parse(jsonText);
+            const urlCorreo = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tq=SELECT%20A&range=${CELDA_CORREO}&sheet=${HOJA}`;
 
-            // VERIFICACIÓN: ¿Existe la tabla y tiene filas?
-            if (json.table && json.table.rows && json.table.rows.length > 0 && json.table.rows[0].c[0]) {
-                datosContacto.nombre = json.table.rows[0].c[0].v;
-                document.getElementById('nombre-funcionario').innerText = datosContacto.nombre;
-            } else {
-                document.getElementById('nombre-funcionario').innerText = "Celda vacía o error";
-            }
+            const [resNombre, resCorreo] = await Promise.all([fetch(urlNombre), fetch(urlCorreo)]);
+            const textNombre = await resNombre.text();
+            const textCorreo = await resCorreo.text();
+
+            // Limpieza flexible del JSON
+            const parsear = (texto) => {
+                const start = texto.indexOf('{');
+                const end = texto.lastIndexOf('}');
+                const json = JSON.parse(texto.substring(start, end + 1));
+                return json.table.rows[0].c[0].v;
+            };
+
+            datosContacto.nombre = parsear(textNombre);
+            datosContacto.correo = parsear(textCorreo);
+
+            document.getElementById('nombre-funcionario').innerText = datosContacto.nombre;
+            document.getElementById('correo-funcionario').innerText = datosContacto.correo;
         } catch (e) {
-            console.error("Error capturado:", e);
-            document.getElementById('nombre-funcionario').innerText = "Error al procesar datos";
+            console.error("Error al cargar:", e);
+            document.getElementById('nombre-funcionario').innerText = "Error al conectar";
         }
     }
 
