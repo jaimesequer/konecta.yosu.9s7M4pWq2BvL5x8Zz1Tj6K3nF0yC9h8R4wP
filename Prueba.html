@@ -6963,7 +6963,6 @@ function enviarEmailRentaDiaria() {
 
 
 
-
 <div id="solicitud-carta-no-reclamacion" class="info-section" style="padding-top: 20px; border-top: 1px solid #ccc; font-family: Arial, sans-serif;">
     <h2 style="margin-bottom: 5px;">Solicitud Carta de NO Reclamación</h2>
 
@@ -6987,7 +6986,7 @@ function enviarEmailRentaDiaria() {
 </div>
 
 <script>
-    // --- CONFIGURACIÓN: CAMBIA ESTO PARA SELECCIONAR HOJA O CELDA ---
+    // --- CONFIGURACIÓN ---
     const CONFIG = {
         hoja: "Antioquia",
         nombre: "Q6",
@@ -6998,22 +6997,31 @@ function enviarEmailRentaDiaria() {
     
     let datosContacto = { nombre: "", correo: "" };
 
-    // Carga de datos
+    // --- CARGA OPTIMIZADA PARA GITHUB PAGES ---
     fetch(URL_BASE)
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                document.getElementById('nombre-funcionario').innerText = data.error;
-                document.getElementById('correo-funcionario').innerText = "-";
-            } else {
-                datosContacto = data;
-                document.getElementById('nombre-funcionario').innerText = data.nombre;
-                document.getElementById('correo-funcionario').innerText = data.correo;
+        .then(res => {
+            // Leemos como texto primero para evitar bloqueos por redirección automática
+            return res.text();
+        })
+        .then(text => {
+            try {
+                const data = JSON.parse(text);
+                if (data.error) {
+                    document.getElementById('nombre-funcionario').innerText = data.error;
+                } else {
+                    datosContacto = data;
+                    document.getElementById('nombre-funcionario').innerText = data.nombre;
+                    document.getElementById('correo-funcionario').innerText = data.correo;
+                }
+            } catch (e) {
+                console.error("Error al parsear JSON:", text);
+                document.getElementById('nombre-funcionario').innerText = "Error de formato";
             }
         })
-        .catch(() => {
-            document.getElementById('nombre-funcionario').innerText = "Error de conexión";
-            document.getElementById('correo-funcionario').innerText = "Error";
+        .catch(err => {
+            console.error("Error de conexión:", err);
+            document.getElementById('nombre-funcionario').innerText = "Error de conexión (CORS)";
+            document.getElementById('correo-funcionario').innerText = "Revisa consola F12";
         });
 
     function enviarEmail() {
