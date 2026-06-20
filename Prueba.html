@@ -35,29 +35,26 @@
 
     let datosContacto = { nombre: "Cargando...", correo: "Cargando..." };
 
-    async function cargarDatos() {
+ async function cargarDatos() {
         try {
-            // Usamos la API GVIZ para evitar errores de CORS
             const urlNombre = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tq=SELECT%20A&range=${CELDA_NOMBRE}&sheet=${HOJA}`;
-            const urlCorreo = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tq=SELECT%20A&range=${CELDA_CORREO}&sheet=${HOJA}`;
-
-            const [resNombre, resCorreo] = await Promise.all([fetch(urlNombre), fetch(urlCorreo)]);
+            const res = await fetch(urlNombre);
+            const text = await res.text();
             
-            const textNombre = await resNombre.text();
-            const textCorreo = await resCorreo.text();
-            
-            // Limpieza del JSON de Google
-            const jsonNombre = JSON.parse(textNombre.substring(47, textNombre.length - 2));
-            const jsonCorreo = JSON.parse(textCorreo.substring(47, textCorreo.length - 2));
+            // Extraer el JSON del formato GVIZ (quitar el envoltorio)
+            const jsonText = text.substring(47, text.length - 2);
+            const json = JSON.parse(jsonText);
 
-            datosContacto.nombre = jsonNombre.table.rows[0].c[0].v;
-            datosContacto.correo = jsonCorreo.table.rows[0].c[0].v;
-
-            document.getElementById('nombre-funcionario').innerText = datosContacto.nombre;
-            document.getElementById('correo-funcionario').innerText = datosContacto.correo;
+            // VERIFICACIÓN: ¿Existe la tabla y tiene filas?
+            if (json.table && json.table.rows && json.table.rows.length > 0 && json.table.rows[0].c[0]) {
+                datosContacto.nombre = json.table.rows[0].c[0].v;
+                document.getElementById('nombre-funcionario').innerText = datosContacto.nombre;
+            } else {
+                document.getElementById('nombre-funcionario').innerText = "Celda vacía o error";
+            }
         } catch (e) {
-            console.error(e);
-            document.getElementById('nombre-funcionario').innerText = "Error al cargar";
+            console.error("Error capturado:", e);
+            document.getElementById('nombre-funcionario').innerText = "Error al procesar datos";
         }
     }
 
