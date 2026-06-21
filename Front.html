@@ -261,7 +261,7 @@ Servicios de Asistencia  - Front</h1>
 
 <div id="v2_bloqueSalvedadesGenerales" style="font-family: sans-serif; width: 100%; max-width: 900px; margin: 15px 0;">
     <button id="v2_btnAcordeonSalvedades" onclick="v2_alternarAcordeonSalvedades()" style="width: 100%; text-align: left; padding: 12px; background-color: #01b7cd; color: #ffffff; border: 1px solid #01b7cd; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 18px;">
-        <span id="v2_textoBtnSalvedades">Leer Salvedades ⚖️💼</span>
+        <span id="v2_textoBtnSalvedades">Leer Salvedades⚖️💼</span>
         <span id="v2_flechaAcordeon">▼</span>
     </button>
         
@@ -8138,7 +8138,6 @@ function copiarPlantillaV9_Averia() {
 <ul>
 
 
-
 <div id="bloqueSalvedadesBateria" style="font-family: sans-serif; max-width: 900px; width: 100%; margin: 15px 0;">
     <button id="btnAcordeonBateria" onclick="alternarAcordeonBateria()" style="width: 100%; text-align: left; padding: 12px; background-color: #01b7cd; color: #ffffff; border: 1px solid #01b7cd; border-radius: 6px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-size: 18px;">
         <span id="textoBtnBateria">Leer Salvedades 🔋🏍️</span>
@@ -8147,18 +8146,20 @@ function copiarPlantillaV9_Averia() {
     
     <div id="contenidoBateria" style="display: none; background-color: #ffffff; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 6px 6px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); font-size: 14px; color: #333333;">
         
-
+        <!-- 1. Pregunta sobre acompañantes -->
         <div id="itemBat1" class="item-bateria" style="background: #fdfdfd; border: 1px solid #eaeaea; border-radius: 4px; padding: 12px; margin-bottom: 15px; display: flex; flex-direction: row; align-items: center; gap: 15px; width: 100%; box-sizing: border-box;">
-            
             <button id="v10_btnFiltroSi" onclick="v10_mostrarViaPublica()" style="padding: 8px 18px; background-color: #fff; color: #2d6df6; border: 2px solid #2d6df6; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; flex-shrink: 0; transition: all 0.2s;">Sí</button>
-            
             <p style="margin: 0; line-height: 1.5; font-weight: 600; flex: 1; color: #333333;">• Señor(a), ¿Se encuentra usted acompañado de niños menores de 5 años, adultos mayores de 70 años, personas con condiciones de salud o con condiciones especiales?</p>
-            
             <button onclick="eliminarFilaPrioridadTopBateria('itemBat1')" style="padding: 8px 14px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; flex-shrink: 0; white-space: nowrap;">Listo ✓</button>
         </div>
 
-        <div style="margin-bottom: 20px; font-family: sans-serif; font-size: 14px; line-height: 1.6; max-width: 100%;">
+        <!-- 2. UBICACIÓN NUEVA: Pregunta sobre batería expuesta o fácil acceso -->
+        <div id="itemBatNueva" class="item-bateria" style="background: #fdfdfd; border: 1px solid #eaeaea; border-radius: 4px; padding: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; gap: 15px; width: 100%; box-sizing: border-box;">
+            <p style="margin: 0; line-height: 1.5; font-weight: 600; flex: 1;">• Debes tener en cuenta que solo se prestará el servicio si la batería del vehículo se encuentra expuesta o de fácil acceso para el proveedor, si se deben realizar desmontes de alguna pieza de la motocicleta te puedo ofrecer una grúa. Te pregunto, ¿Está expuesta la batería?</p>
+            <button onclick="ocultarItemBateria('itemBatNueva')" style="padding: 8px 14px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; flex-shrink: 0; white-space: nowrap;">Listo ✓</button>
+        </div>
 
+        <div style="margin-bottom: 20px; font-family: sans-serif; font-size: 14px; line-height: 1.6; max-width: 100%;">
 
             <div id="v10_contenedor_via_publica" style="display: none; margin-bottom: 10px;">
                 <p style="margin: 10px 0;"><strong>En vía pública:</strong><br>
@@ -8191,49 +8192,14 @@ function copiarPlantillaV9_Averia() {
                 </select>
             </p>
 
-            <div id="v10_bloque_estacionado_raiz" style="display: none;">
-                <p style="margin: 10px 0;"><strong>Vehículo estacionado:</strong><br>
-                    <select id="v10_estacionado" onchange="controlarCamposEstacionadoV10()" style="width: 100%; padding: 6px; font-family: inherit; margin-top: 5px;">
-                        <option value="" selected>¿El vehículo estaba estacionado?</option>
-                        <option value="Sí">Sí</option>
-                        <option value="No">No</option>
-                    </select>
-                </p>
-
-                <div id="v10_contenedor_estacionado" style="display: none; border-left: 3px solid #01b7cd; padding-left: 15px; margin: 15px 0; background: #fafafa; padding-top: 5px; padding-bottom: 5px;">
-                    <p style="margin: 10px 0;"><strong>Dejó algún sistema encendido:</strong><br>
-                        <select id="v10_sistema" style="width: 100%; padding: 6px; font-family: inherit; margin-top: 5px;">
-                            <option value="" selected>¿Sabe si el vehículo quedó con las luces, el radio u otro sistema encendido?</option>
-                            <option value="Sí">Sí</option>
-                            <option value="No">No</option>
-                            <option value="No sabe">No sabe</option>
-                        </select>
-                    </p>
-
-                    <p style="margin: 10px 0;"><strong>Días sin encender el vh:</strong><br>
-                        <select id="v10_dias" style="width: 100%; padding: 6px; font-family: inherit; margin-top: 5px;">
-                            <option value="" selected>¿Lleva varios días sin encender el vehículo?</option>
-                            <option value="Sí">Sí</option>
-                            <option value="No">No</option>
-                            <option value="No sabe">No sabe</option>
-                        </select>
-                    </p>
-                </div>
-            </div>
-
-
-            <div id="alerta_grua_v10" style="display: none; width: 100%; margin: 12px 0; padding: 10px; border-radius: 4px; font-size: 15px; border: 1px solid #f5c6cb; background-color: #f8d7da; color: #721c24; box-sizing: border-box; font-weight: bold;">
-                ⚠️ <strong>Alerta:</strong> <span id="texto_alerta_grua_v10">Ofrecer servicio de grúa.</span>
+            <div id="alerta_grua_v10" style="display: none; width: 100%; margin: 12px 0; padding: 15px; border-radius: 6px; font-size: 20px; background-color: #ff0000; color: #ffffff; box-sizing: border-box; font-weight: bold; line-height: 1.4; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                ⚠️ <span id="texto_alerta_grua_v10">Ofrecer servicio de grúa.</span>
             </div>
         </div>
 
         <hr style="border: 0; border-top: 1px solid #eaeaea; margin: 20px 0;">
         
-        <div id="itemBatNueva" class="item-bateria" style="background: #fdfdfd; border: 1px solid #eaeaea; border-radius: 4px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 15px; width: 100%; box-sizing: border-box;">
-            <p style="margin: 0; line-height: 1.5; font-weight: 600; flex: 1;">• Debes tener en cuenta que solo se prestará el servicio si la batería del vehículo se encuentra expuesta o de fácil acceso para el proveedor, si se deben realizar desmontes de alguna pieza de la motocicleta te puedo ofrecer una grúa. Te pregunto, ¿Está expuesta la batería?</p>
-            <button onclick="ocultarItemBateria('itemBatNueva')" style="padding: 8px 14px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; flex-shrink: 0; white-space: nowrap;">Listo ✓</button>
-        </div>
-
+        <!-- 3. Confirmación de WhatsApp -->
         <div id="itemBat2" class="item-bateria" style="background: #fdfdfd; border: 1px solid #eaeaea; border-radius: 4px; padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 15px; width: 100%; box-sizing: border-box;">
             <p style="margin: 0; line-height: 1.5; font-weight: 600; flex: 1;">• El servicio se confirmará a través de un mensaje por WhatsApp.</p>
             <button onclick="ocultarItemBateria('itemBat2')" style="padding: 8px 14px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; flex-shrink: 0; white-space: nowrap;">Listo ✓</button>
@@ -8336,78 +8302,34 @@ function verificarProgresoBateria() {
     }
 }
 
-function controlarCamposEstacionadoV10() {
-    const est = document.getElementById('v10_estacionado').value;
-    const contenedor = document.getElementById('v10_contenedor_estacionado');
-    const alertaGrua = document.getElementById('alerta_grua_v10');
-    const textoAlertaGrua = document.getElementById('texto_alerta_grua_v10');
-    const ave = document.getElementById('v10_averia').value;
-
-    if (ave === "No enciende") {
-        if (est === "Sí") {
-            contenedor.style.display = "block";
-            alertaGrua.style.display = "none";
-        } else if (est === "No") {
-            contenedor.style.display = "none";
-            document.getElementById('v10_sistema').value = "";
-            document.getElementById('v10_dias').value = "";
-
-            textoAlertaGrua.innerHTML = "Significa que estaba en movimiento, ofrecer servicio de grúa.";
-            alertaGrua.style.display = "block";
-        } else {
-            contenedor.style.display = "none";
-            alertaGrua.style.display = "none";
-            document.getElementById('v10_sistema').value = "";
-            document.getElementById('v10_dias').value = "";
-        }
-    }
-}
-
 function evaluarAlertasV10() {
     const bat = document.getElementById('v10_bat').value;
     const ave = document.getElementById('v10_averia').value;
-    const bloqueEstacionadoRaiz = document.getElementById('v10_bloque_estacionado_raiz');
     const alertaGrua = document.getElementById('alerta_grua_v10');
     const textoAlertaGrua = document.getElementById('texto_alerta_grua_v10');
 
-    if (bat === "Sí") {
-        document.getElementById('alerta_bateria_v10').style.display = 'block';
-    } else {
-        document.getElementById('alerta_bateria_v10').style.display = 'none';
-    }
-
+    // Prioridad 1: Se apagó en movimiento
     if (ave === "Se apagó en movimiento") {
-        textoAlertaGrua.innerHTML = "Ofrecer servicio de grúa.";
+        textoAlertaGrua.innerHTML = "<strong>Alerta:</strong> Ofrecer servicio de grúa";
         alertaGrua.style.display = 'block';
-        bloqueEstacionadoRaiz.style.display = 'none';
-        document.getElementById('v10_estacionado').value = "";
-        document.getElementById('v10_contenedor_estacionado').style.display = "none";
-        document.getElementById('v10_sistema').value = "";
-        document.getElementById('v10_dias').value = "";
-    } else if (ave === "No enciende") {
-        bloqueEstacionadoRaiz.style.display = 'block';
-        controlarCamposEstacionadoV10();
-    } else {
+    } 
+    // Prioridad 2: El último cambio de batería fue hace más de 2 años es "Sí"
+    else if (bat === "Sí") {
+        textoAlertaGrua.innerHTML = "<strong>Alerta:</strong> Ofrecer servicio de grúa y recomendar que realice un cambio de batería de manera particular";
+        alertaGrua.style.display = 'block';
+    } 
+    // Por defecto se oculta el recuadro si no cumple las anteriores condiciones
+    else {
         alertaGrua.style.display = 'none';
-        bloqueEstacionadoRaiz.style.display = 'none';
-        document.getElementById('v10_estacionado').value = "";
-        document.getElementById('v10_contenedor_estacionado').style.display = "none";
-        document.getElementById('v10_sistema').value = "";
-        document.getElementById('v10_dias').value = "";
     }
 }
 
 function copiarPlantillaV10() {
     const contenedorViaVisible = document.getElementById('v10_contenedor_via_publica').style.display === 'block';
-
     const bat = document.getElementById('v10_bat').value;
     const ave = document.getElementById('v10_averia').value;
-    const est = document.getElementById('v10_estacionado').value;
-    const sis = document.getElementById('v10_sistema').value;
-    const dia = document.getElementById('v10_dias').value;
 
     let contenido = "";
-    
 
     if (contenedorViaVisible) {
         const via = document.getElementById('v10_via_publica').value;
@@ -8415,15 +8337,7 @@ function copiarPlantillaV10() {
     }
     
     contenido += "- El último cambio de batería fue hace más de 2 años: " + bat + "\n";
-    contenido += "- Avería: " + ave + "\n";
-    
-    if (ave === "No enciende") {
-        contenido += "- Vehículo estacionado: " + est + "\n";
-        if (est === "Sí") {
-            contenido += "- Dejó algún sistema encendido: " + sis + "\n";
-            contenido += "- Días sin encender el vh: " + dia;
-        }
-    }
+    contenido += "- Avería: " + ave;
 
     const areaTemporal = document.createElement("textarea");
     areaTemporal.value = contenido.trim();
@@ -8441,8 +8355,6 @@ function copiarPlantillaV10() {
     document.body.removeChild(areaTemporal);
 }
 </script>
-
-
 
 
 
