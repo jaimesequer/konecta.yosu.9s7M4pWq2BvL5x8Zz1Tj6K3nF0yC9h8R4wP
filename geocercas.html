@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geocercas - Movilidad Flexible</title>
+
+<style>
+        body {
+            background-image: url('suraa.png');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+            background-attachment: fixed;
+            margin: 0;
+        }
+    </style>
+
+
+
+
+
+    
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://brunob.github.io/leaflet.fullscreen/Control.FullScreen.css" />
+</head>
+<body>
+
+<h1 style="text-align: center; font-family: Arial, sans-serif; color: #2d6df6; margin-top: 15px; margin-bottom: 0.1px;">
+    Geocercas - Movilidad Flexible
+</h1>
+
+<div id="bloqueMapaGeocerca" style="font-family: Arial, sans-serif; width: 100%; margin: 10px 0; box-sizing: border-box; max-width: 800px; margin: 0 auto; padding: 10px;">
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 15px;">
+        <div>
+            <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 5px; color: #2e7d32;">📍 Origen (Pin Verde):</label>
+
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="txt_origen" placeholder="Ej: Calle 26 # 45-95 Medellín ó Coordenadas" style="flex: 1; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 10px; box-sizing: border-box;">
+                <button type="button" onclick="buscarDireccion('origen')" style="background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">🔍 Buscar</button>
+            </div>
+        </div>
+        <div>
+            <label style="font-size: 14px; font-weight: bold; display: block; margin-bottom: 5px; color: #0056b3;">🏁 Destino (Pin Azul):</label>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="txt_destino" placeholder="Ej: Centro Comercial El Tesoro, Medellín ó Coordenadas" style="flex: 1; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; font-size: 10px; box-sizing: border-box;">
+                <button type="button" onclick="buscarDireccion('destino')" style="background-color: #0056b3; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">🔍 Buscar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="panel_distancia" style="display: none; background-color: #e3f2fd; border: 1px solid #90caf9; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 15px; color: #0d47a1; font-weight: bold; text-align: center;">
+        🚗 Distancia estimada del trayecto: <span id="lbl_kilometros">0.0</span> Km
+    </div>
+
+    <div id="map" style="width: 100%; height: 350px; border-radius: 8px 8px 0 0; border: 1px solid #ccc; border-bottom: none; z-index: 1; box-sizing: border-box;"></div>
+
+    <button type="button" onclick="verifyGeofence()" style="width: 100%; background-color: #1565c0; color: white; border: none; padding: 14px; font-size: 16px; font-weight: bold; border-radius: 0 0 8px 8px; cursor: pointer; transition: background 0.3s; margin-bottom: 20px;">
+        🎯 Verificar Cobertura de Geocerca
+    </button>
+
+    <div id="alerta_mapa_error" style="display: none; padding: 16px; border-radius: 4px; font-size: 16px; border: 2px solid #f5c6cb; background-color: #f8d7da; color: #721c24; font-weight: bold; line-height: 1.6; text-align: center;">
+        No aplica, fuera de la geocerca ❌
+    </div>
+
+    <div id="alerta_servicio_local" style="display: none; padding: 16px; border-radius: 4px; font-size: 15px; border: 2px solid #c3e6cb; background-color: #d4edda; color: #155724; line-height: 1.6; text-align: center; font-weight: bold;">
+        Aplica el servicio ✅
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://brunob.github.io/leaflet.fullscreen/Control.FullScreen.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+<script>
+    let map;
+    let polygons = {};
+    let markerOrigen, markerDestino;
+    let rutaLayer = null;
+
+    // ESPACIO PARA COLOCAR LAS GEOCERCAS MANUALMENTE (Lista completa solicitada)
+    const geofencesData = {
+        apartado: [[-76.719929,8.073294],[-76.721058,8.076718],[-76.724064,8.080482],[-76.731489,8.08512],[-76.735202,8.092297],[-76.737323,8.090634],[-76.735379,8.08232],[-76.733876,8.072342],[-76.735555,8.069542],[-76.742185,8.065078],[-76.741906,8.082295],[-76.742967,8.089384],[-76.741199,8.096473],[-76.7386,8.106183],[-76.739532,8.115547],[-76.745838,8.117392],[-76.747916,8.110155],[-76.753291,8.115902],[-76.758522,8.120088],[-76.746907,8.131452],[-76.742036,8.142669],[-76.740338,8.150634],[-76.738806,8.167725],[-76.744579,8.184156],[-76.746209,8.193851],[-76.699592,8.195102],[-76.646657,8.193017],[-76.581011,8.190129],[-76.417631,8.146713],[-76.421339,8.10817],[-76.415353,8.058261],[-76.399522,7.942614],[-76.411882,7.857526],[-76.45576,7.792628],[-76.476667,7.705715],[-76.544485,7.661522],[-76.655968,7.621008],[-76.776511,7.571711],[-76.917322,7.613584],[-77.013894,7.704291],[-76.973792,7.815958],[-76.914478,7.910726],[-76.871439,7.902779],[-76.787297,7.904565],[-76.755479,7.914003],[-76.745536,7.927016],[-76.755479,7.939854],[-76.738789,7.944074],[-76.74021,7.954097],[-76.741808,7.961307],[-76.732152,7.969964],[-76.723425,7.985101],[-76.735854,8.005672],[-76.743733,8.007455],[-76.743216,8.015658],[-76.738922,8.020597],[-76.735266,8.019218],[-76.724996,8.028411],[-76.72987,8.032605],[-76.733487,8.036788],[-76.73047,8.039029],[-76.722868,8.035237],[-76.715615,8.043855],[-76.713817,8.054944],[-76.715538,8.06556],[-76.718455,8.068098],[-76.719929,8.073295]],
+
+
+
+        armenia: [[-75.705101,4.661114],[-75.703093,4.651108],[-75.712731,4.649307],[-75.738432,4.649907],[-75.761522,4.647306],[-75.774975,4.650908],[-75.77643,4.643415],[-75.773716,4.629731],[-75.773716,4.621934],[-75.781169,4.618613],[-75.789436,4.613675],[-75.792435,4.61016],[-75.794174,4.606067],[-75.798444,4.605813],[-75.806196,4.603217],[-75.813146,4.598548],[-75.825384,4.592072],[-75.83052,4.584844],[-75.837385,4.559472],[-75.837803,4.533118],[-75.831966,4.51154],[-75.820049,4.493113],[-75.813289,4.457137],[-75.806828,4.441035],[-75.798963,4.431093],[-75.763852,4.41303],[-75.739977,4.409669],[-75.680459,4.420045],[-75.65668,4.430627],[-75.632123,4.444909],[-75.638262,4.483673],[-75.595288,4.499994],[-75.598016,4.515635],[-75.59938,4.542155],[-75.566916,4.577041],[-75.552811,4.613389],[-75.551435,4.64665],[-75.578505,4.675187],[-75.607287,4.692856],[-75.626267,4.690569],[-75.63169,4.692232],[-75.638155,4.688906],[-75.657487,4.685023],[-75.682933,4.671096],[-75.698114,4.661069],[-75.705101,4.661114]],
+
+
+
+
+        barrancabermeja: [],
+
+
+
+        barranquilla: [],
+
+
+
+        bogota: [[-73.991513,4.958536],[-74.057597,4.946065],[-74.097677,4.901952],[-74.196477,4.878386],[-74.30937,4.855255],[-74.295148,4.702919],[-74.268885,4.62886],[-74.259845,4.554122],[-74.204116,4.522194],[-74.074724,4.437899],[-74.034369,4.424488],[-74.008106,4.446201],[-74.006184,4.473662],[-74.000844,4.511108],[-73.964147,4.665377],[-73.919671,4.713549],[-73.915416,4.783511],[-73.967945,4.822966],[-73.991513,4.958536]],
+
+
+
+        bucaramanga: [],
+
+
+
+        buga: [[-76.158742,4.130862],[-76.170472,4.139265],[-76.191065,4.145751],[-76.215994,4.146291],[-76.226291,4.134941],[-76.276148,4.101428],[-76.350028,4.050416],[-76.433157,3.944305],[-76.459973,3.837289],[-76.433852,3.753704],[-76.395631,3.681807],[-76.33334,3.647283],[-76.268526,3.634228],[-76.179842,3.674407],[-76.148305,3.784705],[-76.15106,3.821531],[-76.082285,3.834787],[-76.087365,3.882743],[-76.068593,3.959799],[-76.074465,4.042455],[-76.091428,4.076947],[-76.099257,4.10493],[-76.158742,4.130862]],
+
+
+
+        cali: [[-76.485358,3.673264],[-76.558608,3.629662],[-76.568211,3.612513],[-76.569323,3.594959],[-76.573438,3.582481],[-76.580251,3.558999],[-76.578035,3.53716],[-76.607741,3.525395],[-76.621756,3.552432],[-76.639482,3.585881],[-76.676817,3.58228],[-76.689903,3.53537],[-76.666765,3.464919],[-76.640449,3.419637],[-76.640597,3.381102],[-76.629831,3.345997],[-76.610282,3.305463],[-76.59027,3.266014],[-76.535332,3.22926],[-76.509034,3.174664],[-76.448463,3.150134],[-76.398057,3.212162],[-76.404802,3.311906],[-76.39885,3.347196],[-76.370894,3.383561],[-76.341393,3.369444],[-76.327672,3.429793],[-76.31095,3.494846],[-76.265073,3.499554],[-76.244063,3.56289],[-76.337858,3.614256],[-76.376018,3.648916],[-76.460055,3.667315],[-76.485358,3.673264]],
+
+
+
+        cartago: [],
+
+
+
+        cartagena: [],
+
+
+
+        cucuta: [[-72.444572,7.857708],[-72.446754,7.859706],[-72.448421,7.862908],[-72.449929,7.867583],[-72.447934,7.869415],[-72.450611,7.869753],[-72.452703,7.874862],[-72.454897,7.878865],[-72.456989,7.878817],[-72.458254,7.881468],[-72.457038,7.88195],[-72.456795,7.883734],[-72.459325,7.886192],[-72.457379,7.887879],[-72.45879,7.889036],[-72.460104,7.893615],[-72.458984,7.895302],[-72.460152,7.900411],[-72.461563,7.902869],[-72.462564,7.908058],[-72.458574,7.908637],[-72.462499,7.91402],[-72.464203,7.917297],[-72.466035,7.916097],[-72.470534,7.919875],[-72.479044,7.922878],[-72.480902,7.927238],[-72.484814,7.930435],[-72.484288,7.933374],[-72.488005,7.936668],[-72.486342,7.939381],[-72.488983,7.941706],[-72.486031,7.945992],[-72.482046,7.956617],[-72.454458,7.971189],[-72.430158,8.005058],[-72.425866,8.048766],[-72.452535,8.101366],[-72.519398,8.079038],[-72.620139,8.042419],[-72.651954,7.938848],[-72.712148,7.908093],[-72.728718,7.86736],[-72.657536,7.829973],[-72.611674,7.773176],[-72.589192,7.732406],[-72.634874,7.692795],[-72.629545,7.656011],[-72.603658,7.636391],[-72.563305,7.675441],[-72.525288,7.709835],[-72.485531,7.723238],[-72.472825,7.73461],[-72.47341,7.746063],[-72.474581,7.753311],[-72.473044,7.759835],[-72.469606,7.780564],[-72.470045,7.785009],[-72.469679,7.789865],[-72.468948,7.795083],[-72.465729,7.800011],[-72.460456,7.803359],[-72.457719,7.808976],[-72.454873,7.815122],[-72.451355,7.81528],[-72.451995,7.8181],[-72.4503,7.820064],[-72.448893,7.822947],[-72.449436,7.825799],[-72.447166,7.827288],[-72.449596,7.830456],[-72.449596,7.832832],[-72.448282,7.834098],[-72.449593,7.836094],[-72.448506,7.843285],[-72.447216,7.851508],[-72.445759,7.853655],[-72.444572,7.857708]],
+
+
+
+        ibague: [[-75.427322,4.47069],[-75.446198,4.450974],[-75.447868,4.416844],[-75.410713,4.390622],[-75.339444,4.341945],[-75.280283,4.295448],[-75.244024,4.266201],[-75.193897,4.25196],[-75.123381,4.267073],[-75.064511,4.289742],[-74.985532,4.325778],[-74.993848,4.381681],[-75.002921,4.415023],[-74.984358,4.481912],[-74.978324,4.504437],[-75.005282,4.515242],[-75.023651,4.524194],[-75.050637,4.540979],[-75.075427,4.554981],[-75.138472,4.572137],[-75.200016,4.590346],[-75.318609,4.587264],[-75.37088,4.572137],[-75.415402,4.542128],[-75.417068,4.499506],[-75.427322,4.47069]],
+
+
+
+        manizales: [[-75.619254,5.149864],[-75.635399,5.152182],[-75.649216,5.154644],[-75.661139,5.141079],[-75.675817,5.117153],[-75.684168,5.109334],[-75.686938,5.095068],[-75.691184,5.083498],[-75.690487,5.070372],[-75.679821,5.02995],[-75.656439,5.021707],[-75.627918,5.006356],[-75.619812,4.967382],[-75.608195,4.955916],[-75.599388,4.962897],[-75.584906,4.976135],[-75.565646,4.978218],[-75.555345,4.978961],[-75.531009,4.986398],[-75.524025,4.98468],[-75.499078,4.997837],[-75.474056,5.002162],[-75.452695,5.004213],[-75.443945,4.996009],[-75.429533,4.986523],[-75.402242,4.987551],[-75.372131,4.995499],[-75.326837,5.00001],[-75.319887,5.014215],[-75.322371,5.028828],[-75.333322,5.040158],[-75.346042,5.046167],[-75.351288,5.056617],[-75.365695,5.06959],[-75.375015,5.092967],[-75.396683,5.095485],[-75.423037,5.103543],[-75.433871,5.124405],[-75.453019,5.133612],[-75.471163,5.145619],[-75.484524,5.147058],[-75.504025,5.157848],[-75.509442,5.173673],[-75.533662,5.171368],[-75.514813,5.131976],[-75.539097,5.130981],[-75.549133,5.142265],[-75.553758,5.150365],[-75.574993,5.147757],[-75.596374,5.148482],[-75.619254,5.149864]],
+
+
+
+        medellin: [[-75.720895,6.484199],[-75.759906,6.458803],[-75.741618,6.379224],[-75.725449,6.28637],[-75.712797,6.233843],[-75.710706,6.180892],[-75.73488,6.122924],[-75.728244,6.044209],[-75.714791,6.005328],[-75.689194,5.986471],[-75.63089,5.972152],[-75.577202,5.995996],[-75.527228,6.005734],[-75.460709,6.061476],[-75.40226,6.120921],[-75.408176,6.138651],[-75.443651,6.120794],[-75.444839,6.141035],[-75.417235,6.149963],[-75.415744,6.185352],[-75.407309,6.222636],[-75.424371,6.245641],[-75.429607,6.25813],[-75.429713,6.273322],[-75.409647,6.297675],[-75.40973,6.321128],[-75.40208,6.341402],[-75.386574,6.373839],[-75.375812,6.405512],[-75.377331,6.431775],[-75.413328,6.427096],[-75.429124,6.434793],[-75.458393,6.42654],[-75.492112,6.41356],[-75.501642,6.391753],[-75.519261,6.37847],[-75.543563,6.384357],[-75.578048,6.419723],[-75.584276,6.442815],[-75.636069,6.456728],[-75.656218,6.487894],[-75.67358,6.493989],[-75.695148,6.493083],[-75.720894,6.484199]],
+
+
+
+        monteria: [],
+
+
+
+        neiva: [],
+
+
+
+        palmira: [],
+
+
+
+        pasto: [],
+
+
+
+        pereira: [[-75.590976,4.857687],[-75.585815,4.874776],[-75.581145,4.893366],[-75.576207,4.909972],[-75.564777,4.934327],[-75.576722,4.931413],[-75.585817,4.931027],[-75.590333,4.927677],[-75.597014,4.925389],[-75.605692,4.930346],[-75.620005,4.930304],[-75.616878,4.943794],[-75.619925,4.955438],[-75.624359,4.962156],[-75.627932,4.96866],[-75.635227,4.971043],[-75.638029,4.967925],[-75.642307,4.963661],[-75.651123,4.955708],[-75.652036,4.945603],[-75.660386,4.94521],[-75.66106,4.942798],[-75.672846,4.941156],[-75.699965,4.941923],[-75.70891,4.952312],[-75.716287,4.952377],[-75.748796,4.945121],[-75.803588,4.927359],[-75.848,4.898397],[-75.864145,4.898653],[-75.869458,4.908757],[-75.880685,4.911513],[-75.888821,4.908595],[-75.89175,4.902596],[-75.898421,4.885249],[-75.917133,4.889465],[-75.907021,4.872942],[-75.889593,4.8401],[-75.909871,4.810488],[-75.912198,4.801115],[-75.915802,4.77708],[-75.890948,4.763187],[-75.87133,4.784604],[-75.836377,4.778749],[-75.840742,4.741297],[-75.799233,4.734579],[-75.749624,4.71864],[-75.704583,4.727623],[-75.675186,4.719747],[-75.637105,4.713713],[-75.587875,4.715009],[-75.571534,4.711725],[-75.525768,4.700802],[-75.54921,4.737178],[-75.556845,4.746713],[-75.563036,4.752635],[-75.566386,4.758706],[-75.566103,4.764945],[-75.570332,4.775099],[-75.569077,4.785154],[-75.564568,4.789234],[-75.562021,4.793243],[-75.562068,4.799048],[-75.565603,4.807832],[-75.572429,4.816053],[-75.576078,4.827688],[-75.574805,4.834913],[-75.575383,4.844348],[-75.579608,4.850641],[-75.584148,4.853688],[-75.590976,4.857687]],
+
+
+
+        popayan: [],
+
+
+
+        santamarta: [],
+
+
+
+        sincelejo: [],
+
+
+
+        tulua: [],
+
+
+
+        tunja: [],
+
+
+
+        valledupar: [],
+
+
+
+        villavicencio: [[-73.74374,4.23373],[-73.751008,4.224949],[-73.749146,4.214089],[-73.738256,4.197799],[-73.744475,4.190543],[-73.782578,4.185406],[-73.743814,4.113778],[-73.772144,4.045489],[-73.656171,4.024295],[-73.530508,4.042516],[-73.433995,4.050386],[-73.435324,4.133652],[-73.450671,4.174036],[-73.459404,4.215807],[-73.460235,4.277172],[-73.470857,4.275432],[-73.488728,4.281979],[-73.502045,4.282453],[-73.513936,4.290358],[-73.52551,4.291465],[-73.531694,4.29526],[-73.548204,4.293493],[-73.571077,4.289945],[-73.588041,4.279985],[-73.617985,4.264497],[-73.659563,4.256501],[-73.685122,4.241439],[-73.74374,4.23373]]
+    };
+
+    function initMap() {
+        map = L.map('map', {
+            fullscreenControl: true,
+            fullscreenControlOptions: { position: 'topleft' }
+        }).setView([4.570868, -74.297333], 6);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // Renderizar geocercas en color azul cielo (evitando pintar capas si están vacías)
+        for (let city in geofencesData) {
+            if (geofencesData[city].length > 0) {
+                let leafletCoords = geofencesData[city].map(coord => [coord[1], coord[0]]);
+                polygons[city] = L.polygon(leafletCoords, {
+                    color: '#0099e6',      
+                    fillColor: '#00bfff',  
+                    fillOpacity: 0.22,
+                    weight: 2
+                }).addTo(map);
+            }
+        }
+
+        // Configuración de pines iniciales estilizados
+        const greenIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+        });
+
+        const blueIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+        });
+
+        markerOrigen = L.marker([4.6580, -74.0930], {icon: greenIcon, draggable: true}).addTo(map).bindPopup("Origen 📍");
+        markerDestino = L.marker([4.6710, -74.0820], {icon: blueIcon, draggable: true}).addTo(map).bindPopup("Destino 🏁");
+
+        markerOrigen.on('dragend', limpiarRutaGrafica);
+        markerDestino.on('dragend', limpiarRutaGrafica);
+    }
+
+    function limpiarRutaGrafica() {
+        if (rutaLayer) { map.removeLayer(rutaLayer); rutaLayer = null; }
+        document.getElementById("panel_distancia").style.display = "none";
+    }
+
+    // EL MOTOR DE BÚSQUEDA ROBUSTO GLOBAL
+    async function obtenerCoordenadas(inputString) {
+        const limpio = inputString.trim();
+        if (!limpio) return null;
+
+        if (limpio.includes('maps.google') || limpio.startsWith('http')) {
+            const regexUrlCoords = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+            const match = limpio.match(regexUrlCoords);
+            if (match) {
+                return [parseFloat(match[1]), parseFloat(match[2])];
+            }
+        }
+
+        const regexCoords = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
+        if (regexCoords.test(limpio)) {
+            const [lat, lon] = limpio.split(',').map(Number);
+            return [lat, lon];
+        }
+
+        try {
+            const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=co&q=${encodeURIComponent(limpio)}`;
+            const response = await fetch(url, { headers: { 'Accept-Language': 'es' } });
+            const data = await response.json();
+            if (data && data.length > 0) {
+                return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+            }
+        } catch (error) {
+            console.error("Error en geocodificación: ", error);
+        }
+        return null;
+    }
+
+    async function buscarDireccion(tipo) {
+        let idInput = tipo === 'origen' ? 'txt_origen' : 'txt_destino';
+        let marker = tipo === 'origen' ? markerOrigen : markerDestino;
+        let entrada = document.getElementById(idInput).value;
+        
+        let coordenadas = await obtenerCoordenadas(entrada);
+        if (coordenadas) {
+            marker.setLatLng(coordenadas);
+            map.setView(coordenadas, 14); 
+            limpiarRutaGrafica();
+        } else {
+            alert("No se pudo procesar la ubicación. Intenta escribir la ciudad o añadir más detalles.");
+        }
+    }
+
+    // BOTÓN MAESTRO: EVALUAR COBERTURAS MATEMÁTICAS EN LAS GEOCERCAS
+    async function verifyGeofence() {
+        let entradaOrigen = document.getElementById('txt_origen').value;
+        let entradaDestino = document.getElementById('txt_destino').value;
+
+        let coordsOrigen = await obtenerCoordenadas(entradaOrigen);
+        let coordsDestino = await obtenerCoordenadas(entradaDestino);
+
+        if (coordsOrigen) markerOrigen.setLatLng(coordsOrigen);
+        if (coordsDestino) markerDestino.setLatLng(coordsDestino);
+
+        let latLngOrig = markerOrigen.getLatLng();
+        let latLngDest = markerDestino.getLatLng();
+
+        let ptOrigen = turf.point([latLngOrig.lng, latLngOrig.lat]);
+        let ptDestino = turf.point([latLngDest.lng, latLngDest.lat]);
+
+        let aplica = false;
+
+        // Comprobación geométrica matemática
+        for (let city in geofencesData) {
+            if (geofencesData[city].length > 0) {
+                let coords = [...geofencesData[city]];
+                if (coords[0][0] !== coords[coords.length-1][0] || coords[0][1] !== coords[coords.length-1][1]) {
+                    coords.push(coords[0]);
+                }
+                let poly = turf.polygon([coords]);
+                if (turf.booleanPointInPolygon(ptOrigen, poly) && turf.booleanPointInPolygon(ptDestino, poly)) {
+                    aplica = true;
+                    break;
+                }
+            }
+        }
+
+        let alertaError = document.getElementById("alerta_mapa_error");
+        let alertaExito = document.getElementById("alerta_servicio_local");
+
+        if (aplica) {
+            alertaError.style.display = "none";
+            alertaExito.style.display = "block";
+
+            let grupo = new L.featureGroup([markerOrigen, markerDestino]);
+            map.fitBounds(grupo.getBounds().pad(0.3));
+
+            try {
+                let urlRuta = `https://router.project-osrm.org/route/v1/driving/${latLngOrig.lng},${latLngOrig.lat};${latLngDest.lng},${latLngDest.lat}?overview=full&geometries=geojson`;
+                let resRuta = await fetch(urlRuta);
+                let dataRuta = await resRuta.json();
+
+                if (dataRuta.routes && dataRuta.routes.length > 0) {
+                    limpiarRutaGrafica();
+                    let routeCoords = dataRuta.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+                    rutaLayer = L.polyline(routeCoords, {color: '#0056b3', weight: 5, opacity: 0.85}).addTo(map);
+
+                    let kms = (dataRuta.routes[0].distance / 1000).toFixed(1);
+                    document.getElementById("lbl_kilometros").innerText = kms;
+                    document.getElementById("panel_distancia").style.display = "block";
+                }
+            } catch (err) {
+                let distLineal = (map.distance(latLngOrig, latLngDest) / 1000).toFixed(1);
+                document.getElementById("lbl_kilometros").innerText = distLineal;
+                document.getElementById("panel_distancia").style.display = "block";
+            }
+        } else {
+            limpiarRutaGrafica();
+            alertaExito.style.display = "none";
+            alertaError.style.display = "block"; // Muestra "No aplica, fuera de la geocerca ❌"
+            
+            let grupo = new L.featureGroup([markerOrigen, markerDestino]);
+            map.fitBounds(grupo.getBounds().pad(0.3));
+        }
+    }
+
+    window.onload = initMap;
+</script>
+
+</body>
+</html>
