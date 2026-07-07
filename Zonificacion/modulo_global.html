@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zonificación de Talleres 3.0 - Global</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    
+    <style>
+        /* Desactivamos y ocultamos por completo cualquier panel, texto o recuadro del enrutador en el mapa */
+        .leaflet-routing-container, 
+        .leaflet-routing-error, 
+        .leaflet-routing-geocoders {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<div id="zonificacion-talleres" class="info-section" style="font-family: Arial, sans-serif; padding: 20px; max-width: 1000px; margin: 0 auto;">
+    <div style="margin-bottom: 20px;">
+        <h2 style="margin: 0; color: #333;">Zonificación de Talleres 3.0</h2>
+    </div>
+
+    <div style="margin-bottom: 25px; background-color: #e9ecef; padding: 15px; border-radius: 8px;">
+        <label for="selector-producto" style="display: block; font-weight: bold; margin-bottom: 8px; color: #495057; font-size: 15px;">Seleccione el tipo de cobertura / vehículo:</label>
+        <select id="selector-producto" onchange="controlarVistasPorProducto()" style="width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 4px; background-color: white; font-size: 15px; font-weight: bold; color: #333; cursor: pointer;">
+            <option value="global" selected>Autos y Motos Global</option>
+            <option value="clasica">Autos Clásica / Básica / Estándar</option>
+            <option value="pesados">Autos Pesados y Utilitarios</option>
+            <option value="motos">Motos Tradicional / Motocarros</option>
+        </select>
+    </div>
+
+    <div id="mensaje-estado-producto" style="display: none; background-color: #e2e3e5; color: #383d41; padding: 18px; border-left: 6px solid #6c757d; border-radius: 4px; margin-bottom: 25px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+    </div>
+
+    <div id="bloque-mapa-operativo">
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e9ecef;">
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #495057;">Ubicación Actual / Origen (Nomenclatura, Coordenadas o Link de Maps):</label>
+                <input type="text" id="origen-coords" placeholder="Ej: Calle 26 # 45-95 Medellín o pegue el Link del Pin de Maps" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #495057;">Ciudad de Circulación:</label>
+                <input type="text" id="ciudad-circulacion" placeholder="Ej: Sabaneta, Antioquia o Bogota" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box;">
+            </div>
+            
+            <button onclick="procesarYCalcularGlobal()" style="width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px;">🌐 Validar Cobertura Global</button>
+        </div>
+
+        <div id="mapa-talleres" style="height: 480px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 20px; z-index: 1;"></div>
+
+        <div id="contenedor-resultados" style="display: none;">
+            <div style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 6px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <h4 style="margin: 0 0 12px 0; color: #495057; border-bottom: 1px solid #dee2e6; padding-bottom: 5px;">Análisis de Trayecto (Módulo Global)</h4>
+                <p style="margin: 6px 0;">📍 <b>Origen Procesado:</b> <span id="res-origen-texto" style="color: #6c757d;"></span></p>
+                <p style="margin: 6px 0;">🏙️ <b>Ciudad de Circulación:</b> <span id="res-ciudad-texto" style="color: #6c757d;"></span></p>
+                <p style="margin: 6px 0;">🛣️ <b>Distancia de trayecto en ruta:</b> <span id="res-distancia-trayecto" style="color: #333; font-weight: bold;"></span></p>
+            </div>
+
+            <div id="alerta-global" style="padding: 18px; border-radius: 4px; margin-bottom: 25px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+<script>
+let map;
+let origenMarker = null;
+let ciudadMarker = null;
+let controlRuta = null;
+
+// Inicialización automática del mapa al cargar el módulo global
+window.onload = function() {
+    initMap();
+};
+
+function initMap() {
+    map = L.map('mapa-talleres').setView([4.570868, -74.297333], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+}
+
+function controlarVistasPorProducto() {
+    const seleccion = document.getElementById('selector-producto').value;
+    const bloqueMapa = document.getElementById('bloque-mapa-operativo');
+    const contenedorMsg = document.getElementById('mensaje-estado-producto');
+
+    bloqueMapa.style.display = "none";
+    contenedorMsg.style.display = "none";
+
+    if (seleccion === "global") {
+        bloqueMapa.style.display = "block";
+        if (map) setTimeout(() => { map.invalidateSize(); }, 50);
+    } else if (seleccion === "pesados" || seleccion === "motos") {
+        contenedorMsg.innerText = "⏳ Pendiente de anexar datos";
+        contenedorMsg.style.display = "block";
+    } else if (seleccion === "clasica") {
+        contenedorMsg.innerText = "⚙️ Redireccionando al módulo de Autos Clásica...";
+        contenedorMsg.style.display = "block";
+        
+        // 📌 REDIRECCIÓN: Cambia 'index.html' por el nombre del archivo principal
+        setTimeout(() => {
+            window.location.href = "index.html"; 
+        }, 800);
+    }
+}
+
+async function obtenerCoordenadas(inputString) {
+    const limpio = inputString.trim();
+
+    if (limpio.includes('maps.google') || limpio.startsWith('http')) {
+        const regexUrlCoords = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+        const match = limpio.match(regexUrlCoords);
+        if (match) {
+            return { lat: parseFloat(match[1]), lon: parseFloat(match[2]), texto: "Coordenadas desde Link de Maps" };
+        }
+    }
+
+    const regexCoords = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
+    if (regexCoords.test(limpio)) {
+        const [lat, lon] = limpio.split(',').map(Number);
+        return { lat, lon, texto: limpio };
+    }
+
+    try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=co&q=${encodeURIComponent(limpio)}`;
+        const response = await fetch(url, { headers: { 'Accept-Language': 'es' } });
+        const data = await response.json();
+        if (data && data.length > 0) {
+            return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), texto: data[0].display_name };
+        }
+    } catch (error) {
+        console.error(error);
+    }
+    return null;
+}
+
+async function procesarYCalcularGlobal() {
+    const origenRaw = document.getElementById('origen-coords').value;
+    const ciudadRaw = document.getElementById('ciudad-circulacion').value;
+
+    if (!origenRaw || !ciudadRaw) {
+        alert("Por favor, introduce el Origen y la Ciudad de Circulación.");
+        return;
+    }
+
+    const coordsOrigen = await obtenerCoordenadas(origenRaw);
+    if (!coordsOrigen) {
+        alert("No se pudo procesar la ubicación de origen.");
+        return;
+    }
+
+    const coordsCiudad = await obtenerCoordenadas(ciudadRaw);
+    if (!coordsCiudad) {
+        alert("No se pudo procesar la ubicación de la ciudad de circulación.");
+        return;
+    }
+
+    // Gestionar Marcadores en el Mapa
+    if (origenMarker) map.removeLayer(origenMarker);
+    origenMarker = L.circleMarker([coordsOrigen.lat, coordsOrigen.lon], {
+        radius: 10, fillColor: "#28a745", color: "#fff", weight: 2, fillOpacity: 1
+    }).addTo(map).bindPopup("<b>Origen</b>");
+
+    if (ciudadMarker) map.removeLayer(ciudadMarker);
+    ciudadMarker = L.circleMarker([coordsCiudad.lat, coordsCiudad.lon], {
+        radius: 10, fillColor: "#007bff", color: "#fff", weight: 2, fillOpacity: 1
+    }).addTo(map).bindPopup(`<b>Circulación: ${ciudadRaw}</b>`);
+
+    if (controlRuta) {
+        map.removeControl(controlRuta);
+        controlRuta = null;
+    }
+
+    document.getElementById('res-origen-texto').innerText = coordsOrigen.texto;
+    document.getElementById('res-ciudad-texto').innerText = coordsCiudad.texto;
+
+    // Trazar y evaluar ruta por OSRM
+    controlRuta = L.Routing.control({
+        waypoints: [
+            L.latLng(coordsOrigen.lat, coordsOrigen.lon),
+            L.latLng(coordsCiudad.lat, coordsCiudad.lon)
+        ],
+        router: L.Routing.osrmv1({
+            serviceUrl: `https://router.project-osrm.org/route/v1`
+        }),
+        createMarker: function() { return null; }, 
+        show: false, 
+        addWaypoints: false, 
+        fitSelectedRoutes: true, 
+        lineOptions: {
+            styles: [{ color: '#007bff', opacity: 0.7, weight: 5 }]
+        }
+    }).addTo(map);
+
+    controlRuta.on('routesfound', function(e) {
+        const routes = e.routes;
+        const summary = routes[0].summary;
+        const distRutaKm = summary.totalDistance / 1000;
+
+        document.getElementById('res-distancia-trayecto').innerText = `${distRutaKm.toFixed(2)} Km`;
+        
+        const alertaGlobal = document.getElementById('alerta-global');
+        document.getElementById('contenedor-resultados').style.display = "block";
+
+        if (distRutaKm > 30) {
+            // Caso: Más de 30km (Alerta verde)
+            alertaGlobal.style.backgroundColor = "#d4edda";
+            alertaGlobal.style.color = "#155724";
+            alertaGlobal.style.borderLeft = "6px solid #28a745";
+            alertaGlobal.innerHTML = `✅ El servicio aplica a nivel nacional por aplicabilidad de póliza.`;
+        } else {
+            // Caso: Menos o igual a 30km (Alerta amarilla - Ciudad en MAYÚSCULAS)
+            const ciudadMayusculas = ciudadRaw.trim().toUpperCase();
+            
+            alertaGlobal.style.backgroundColor = "#fff3cd";
+            alertaGlobal.style.color = "#856404";
+            alertaGlobal.style.borderLeft = "6px solid #ffc107";
+            alertaGlobal.innerHTML = `⚠️ El servicio solo aplica para <b>${ciudadMayusculas}</b>, y/o su área metropolitana en caso de que tenga.`;
+        }
+    });
+
+    controlRuta.on('routingerror', function() {
+        alert("No se pudo trazar una ruta vial entre los dos puntos. Intente afinando las direcciones.");
+    });
+}
+</script>
+
+</body>
+</html>

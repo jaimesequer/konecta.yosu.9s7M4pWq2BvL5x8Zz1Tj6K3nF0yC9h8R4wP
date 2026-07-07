@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zonificación de Talleres 3.0</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    
+    <style>
+        /* Desactivamos y ocultamos por completo cualquier panel, texto o recuadro del enrutador en el mapa */
+        .leaflet-routing-container, 
+        .leaflet-routing-error, 
+        .leaflet-routing-geocoders {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<div id="zonificacion-talleres" class="info-section" style="font-family: Arial, sans-serif; padding: 20px; max-width: 1000px; margin: 0 auto;">
+    <div style="margin-bottom: 20px;">
+        <h2 style="margin: 0; color: #333;">Zonificación de Talleres 3.0</h2>
+    </div>
+
+    <div style="margin-bottom: 25px; background-color: #e9ecef; padding: 15px; border-radius: 8px;">
+        <label for="selector-producto" style="display: block; font-weight: bold; margin-bottom: 8px; color: #495057; font-size: 15px;">Seleccione el tipo de cobertura / vehículo:</label>
+        <select id="selector-producto" onchange="controlarVistasPorProducto()" style="width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 4px; background-color: white; font-size: 15px; font-weight: bold; color: #333; cursor: pointer;">
+            <option value="" disabled selected>-- Seleccione una opción --</option>
+            <option value="global">Autos y Motos Global</option>
+            <option value="clasica">Autos Clásica / Básica / Estándar</option>
+            <option value="pesados">Autos Pesados y Utilitarios</option>
+            <option value="motos">Motos Tradicional / Motocarros</option>
+        </select>
+    </div>
+
+    <div id="mensaje-estado-producto" style="display: none; background-color: #e2e3e5; color: #383d41; padding: 18px; border-left: 6px solid #6c757d; border-radius: 4px; margin-bottom: 25px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+    </div>
+
+    <div id="bloque-mapa-operativo" style="display: none;">
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e9ecef;">
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #495057;">Dirección Origen / Actual (Nomenclatura, Coordenadas o Link/Pin de Maps):</label>
+                <input type="text" id="origen-coords" placeholder="Ej: Calle 26 # 45-95 Medellín o pegue el Link del Pin de Maps" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box;">
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #495057;">Dirección Destino (Nomenclatura, Coordenadas o Link/Pin de Maps):</label>
+                <input type="text" id="destino-coords" placeholder="Ej: Centro Comercial El Tesoro, Medellín" style="width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box;">
+            </div>
+            
+            <button onclick="procesarYCalcular()" style="width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px;">🔍 Buscar y Calcular Distancias</button>
+        </div>
+
+        <div id="mapa-talleres" style="height: 480px; width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 20px; z-index: 1;"></div>
+
+        <div id="contenedor-resultados" style="display: none;">
+            <div style="background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 6px; padding: 15px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <h4 style="margin: 0 0 12px 0; color: #495057; border-bottom: 1px solid #dee2e6; padding-bottom: 5px;">Métricas de Ruta</h4>
+                <p style="margin: 6px 0;">📍 <b>Dirección Actual / Origen:</b> <span id="res-dir-actual" style="color: #6c757d;"></span></p>
+                <p style="margin: 6px 0;">🏁 <b>Dirección Destino:</b> <span id="res-dir-destino" style="color: #6c757d;"></span></p>
+                <p style="margin: 6px 0;">🚗 <b>Distancia al taller seleccionado:</b> <span id="res-dist-taller" style="color: #495057; font-weight: bold;"></span></p>
+                <p style="margin: 6px 0;">🗺️ <b>Distancia a la dirección destino:</b> <span id="res-dist-destino" style="color: #007bff; font-weight: bold;"></span></p>
+                <p style="margin: 6px 0;">💰 <b>Excedente a asumir por el asegurado:</b> <span id="res-excedente" style="font-weight: bold;"></span></p>
+            </div>
+
+            <div id="alerta-taller" style="background-color: #fff3cd; color: #000000; padding: 18px; border-left: 6px solid #ffc107; border-radius: 4px; margin-bottom: 25px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+            </div>
+
+            <div style="background-color: #f8f9fa; border: 1px solid #e9ecef; padding: 15px; border-radius: 6px;">
+                <h4 style="margin: 0 0 10px 0; color: #333;">Opciones de Talleres Cercanos disponibles:</h4>
+                <div style="max-height: 250px; overflow-y: auto;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+                        <thead>
+                            <tr style="background-color: #e9ecef; border-bottom: 2px solid #dee2e6;">
+                                <th style="padding: 8px;">Zona</th>
+                                <th style="padding: 8px;">Distancia desde Origen</th>
+                                <th style="padding: 8px; text-align: center;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-talleres-cuerpo">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+<script>
+const areasMetropolitanas = {
+    "Armenia": ["calarca", "circasia", "latebaida", "montenegro", "salento", "armenia"],
+    "Barranquilla": ["soledad", "galapa", "malambo", "puertocolombia", "barranquilla"],
+    "Bogotá": ["bogota", "soacha", "mosquera", "funza", "madrid", "chia", "cajica", "cota", "lacalera", "tenjo", "tabio", "sibate", "zipaquira", "facatativa", "tocancipa", "sopo"],
+    "Bucaramanga": ["giron", "lebrija", "piedecuesta", "floridablanca", "bucaramanga"],
+    "Cali": ["yumbo", "jamundi", "palmira", "candelaria", "cali"],
+    "Cartagena": ["turbaco", "turbana", "clemencia", "santarosadelima", "cartagena"],
+    "Manizales": ["neira", "chinchina", "villamaria", "palestina", "manizales"],
+    "Medellín": ["bello", "itagui", "envigado", "caldas", "copacabana", "laestrella", "girardota", "sabaneta", "barbosa", "rionegro", "guarne", "medellin"],
+    "Pereira": ["dosquebradas", "lavirginia", "pereira"],
+    "Santa Marta": ["pueblovejio", "cienaga", "santamarta"],
+    "Villavicencio": ["acacias", "guamal", "restrepo", "cumaral", "villavicencio"]
+};
+
+const talleresGeoJSON = {"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.565815,6.247638,0]},"properties":{"name":"Medellín","description":{"@type":"html","value":"ANDAR CHEVROLET CL 27 NRO 43 F 50<br>AGENCIAUTO RENAULT Cra 48 - 20 -103<br>ANC AUTOS MULTIMARCA CR 46 # 32-116<br>AUTOGUAYACAN HONDA CL 24 SUR # 43A-60 ENVIGADO<br>AUTOAMERICA PALACE TOYOTA CR 50 # 38-50<br>AUTOGERMANA BMW CL 26 # 45-95<br>AUTOKOREANA HYUNDAI Carrera 43 A # 25 A 15<br>AUTOMONTAÑA MAZDA VOLVO VW Cra 43A # 30-26<br>AUTOMOTORA SAN DIEGO Cra 48 - 20 -103<br>CARIBE MOTOR RENAULT CALLE 14 # 51-125<br>CASA BRITANICA KIA SUZUKI MERCEDES TOYOTA CL 24 # 50-43<br>COLWAGEN AUDI Cl 10 # 50-267 Mall del Rio<br>EL ROBLE MOTOR FORD CL 31 # 46-28<br>SOMERAUTO MAZDA CARRERA 48 # 14-16<br>TUYOMOTOR TOYOTA CARRERA 48 # 14-230<br>VEHICULOS DEL CAMINO MAZDA FORD CL 17 # 43 F-89<br>YOKOMOTOR GUAYABAL TOYOTA CL 10 # 50-398<br>SERVIPESADOS MULTIMARCA Calle 19 No 43B 64<br>ANDAR PESADOS CHEVROLET Cra. 77 #28-13 Belén"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.378952,6.149019,0]},"properties":{"name":"Rionegro","description":{"@type":"html","value":"AUTOLARTE RIONEGRO CHEVROLET Cl 10A #41A-09<br>CASA BRITANICA RIONEGRO RENAULT KM3 VIA LLANO GRANDE"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.583696,6.167287,0]},"properties":{"name":"Envigado","description":{"@type":"html","value":"AYURA MOTOR CHEVROLET CRA 48 # 26 SUR 27<br>CASA BRITANICA RENAULT CARRERA 43A # 25B SUR - 176<br>METROKIA KIA Cr 48 N 44 Sur 95<br>PRACO DIDACOL LIVIANOS Y HINO MACK Carrera 48 # 29 sur - 221"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.616879,6.150486,0]},"properties":{"name":"Sabaneta","description":{"@type":"html","value":"ETM Equipos Tecnimetalicos CARROCERIAS Carrera 49 # 52 Sur-200"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.636623,6.151145,0]},"properties":{"name":"La Estrella","description":{"@type":"html","value":"ALEMAUTOS MERCEDES BENZ PESADOS - FREIGHTLINER"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.619032,6.168183,0]},"properties":{"name":"Itagüi","description":{"@type":"html","value":"AUTOLARTE SUR CHEVROLET Cl 10A #40-28<br>NISSAN TALLERES AUTORIZADOS S.A CRA 42 # 32-50<br>NAVITRANS INTERNATIONAL Cra 42 No 24-85<br>KENWORTH DE LA MONTAÑA Carrera 42 N° 72-131<br>DIESEL ANDINO CHEVROLET PESADOS Autopista Sur Cra 42 # 33-50"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.559589,6.336729,0]},"properties":{"name":"Bello","description":{"@type":"html","value":"ASEDIESEL MULTIMARCA PESADOS"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.505078,6.357621,0]},"properties":{"name":"Copacabana","description":{"@type":"html","value":"CARROCERIAS LIBERTAD Calle 56 # 42-201<br>PANAMERICANA CARROCERIAS AUTOPISTA MEDELLÍN-BOGOTÁ"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.198166,7.983182,0]},"properties":{"name":"Caucasia","description":{"@type":"html","value":"VEHICAUCA Caucasia MULTIMARCA Cra 20 # 1-24 Sector el Lago"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-76.624692,7.882761,0]},"properties":{"name":"Apartadó","description":{"@type":"html","value":"AYURA MOTOR APARTADO CHEVROLET Km 1 Via a Carepa"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-74.072092,4.710989,0]},"properties":{"name":"Bogotá","description":{"@type":"html","value":"AUTOMOTORES SAN JORGE Chevrolet Calle 13 No. 38-91<br>CONTINAUTOS S.A Chevrolet AK 68 No. 20-71<br>STUTTGART Mercedes Benz Calle 99 No. 11-42<br>KYOTO MOTORS Mazda Avenida 68 # 22A-95<br>NISSAN TALLERES AUTORIZADOS CR 56 # 12-44<br>AUTOGERMANA BMW CR 50 # 17-29<br>MARCALI RENAULT JEEP KIA HONDA Carrera 13 No. 34-76<br>DISTOYOTA Toyota Cra. 70 #No. 102-02<br>LOS COCHES Volvo Audi Carrera 70 # 100-30<br>MERCEDES BENZ MOTORYSA Autopista Norte No. 183A-58<br>YOKOMOTOR S.A Toyota Carrera 7 # 134-36<br>NAVITRANS INTERNATIONAL Av Ciudad de Cali # 13C-31<br>KENWORTH DE LA MONTAÑA Av Centenario # 97-37"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.628547,4.149169,0]},"properties":{"name":"Villavicencio","description":{"@type":"html","value":"AUTOMOTORES LLANO GRANDE Chevrolet Calle 1 #39-01<br>CASA TORO Renault Mazda Ford VW Anillo Vial Km 1<br>DINISSAN Nissan Av 40 Calle 9 Esquina<br>VEHILLANOS Toyota Carrera 23 #73D-48"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.2809,2.934484,0]},"properties":{"name":"Neiva","description":{"@type":"html","value":"AUTOCENTRO LTDA Multimarca CALLE 3 5-84<br>REINDUSTRIAS VW Suzuki Citroen Honda CL 21 15-84<br>DINISSAN Nissan Cra. 5 SUR #26-234<br>CASATORO Mazda Cra. 5 SUR #26-212<br>DISTOYOTA Toyota Cra. 5 SUR #10-12"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-72.400523,5.348903,0]},"properties":{"name":"Yopal","description":{"@type":"html","value":"LLANOGRANDE YOPAL Chevrolet Carrera 20 N°30-41<br>DINISSAN Nissan Calle 24 #5-158<br>LOS COCHES YOPAL Renault Carrera 19 #20-50"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.032927,5.826895,0]},"properties":{"name":"Duitama","description":{"@type":"html","value":"CENTRAL AUTOMOTRIZ ROSAS Multimarca Ciudadela Industrial<br>SANAUTOS Renault cra 42 #22-69"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.357557,5.544642,0]},"properties":{"name":"Tunja","description":{"@type":"html","value":"ALBORAUTOS Renault Toyota Suzuki Honda CR 6 No 51-174<br>DISAUTOS Chevrolet AV NORTE # 34-35<br>DINISSAN Nissan Avenida Norte # 80-19"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-77.285787,1.205884,0]},"properties":{"name":"Pasto","description":{"@type":"html","value":"MOTOR KIA KIA Cr 40 A# 17A-35<br>NISSAN NISSAN cra 13a # 10-54 barrio San Miguel<br>PASTO MOTORS RENAULT calle 14 #13-78<br>AUTODENAR CHEVROLET CL 22 # 22-96 Av. Santander"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-76.614739,2.444814,0]},"properties":{"name":"Popayán","description":{"@type":"html","value":"COCHE EXPRESS MULTIMARCA Calle 2A # 11-39<br>ALBORAUTOS RENAULT CRA 17 # 12 07<br>AUTOPACIFICO CHEVROLET carrera 9 # 22N-53"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-76.531985,3.451647,0]},"properties":{"name":"Cali","description":{"@type":"html","value":"AGRICOLA AUTOMOTRIZ TOYOTA Carrera 8 # 33 -72<br>AUTOMOTORA NORTE Y SUR TOYOTA Calle 15 No. 35-84 Acopi<br>AUTOPACIFICO CHEVROLET CARRERA 7 # 34-135<br>CALIMA MOTOR VOLVO PEUGEOT Carrera 1 # 32-35<br>MOTOVALLE FORD MAZDA Cl. 9 # 44-59<br>TALLER AUTOMARCALI CHEVROLET AV PASOANCHO N 70-74<br>NISSAN Calle 70 # 3N-74 Sameco<br>COLWAGEN AUDI Calle 18 # 105-95"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-76.297166,3.537972,0]},"properties":{"name":"Palmira","description":{"@type":"html","value":"AUTOPACIFICO CHEVROLET Calle 42 # 49-153<br>CENTRO MOTORS KIA Calle 42 # 32B-05"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-76.306264,3.894605,0]},"properties":{"name":"Buga","description":{"@type":"html","value":"ULTRAMAR MULTIMARCA calle 4 # 7-59<br>AUTOMOTORES BEJARANO RENAULT Carrera 15 # 8-62"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-76.191499,4.089869,0]},"properties":{"name":"Tuluá","description":{"@type":"html","value":"AUTO ALAMO HYUNDAI Cra 40 # 43-88<br>AUTOPACIFICO CHEVROLET Calle 50 # 40-15<br>CENTRO MOTORS KIA Cra 40 # 26-50"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.675689,4.535,0]},"properties":{"name":"Armenia","description":{"@type":"html","value":"COLAUTOS MAZDA Cra 16 # 26-33<br>AUTOCORDILLERA TOYOTA SUZUKI calle 8 No 19-100<br>CENTRO AUTOMOTOR RENAULT Av. Bolívar Cl. 19 Nte.<br>CAMINOS CHEVROLET Av. Bolívar No 23Norte<br>ARMOTOR KIA HONDA Av. Bolívar No. 28 Norte-60"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.242438,4.444676,0]},"properties":{"name":"Ibagué","description":{"@type":"html","value":"COLTOLIMA CHEVROLET CRA 5 # 19-11<br>S.I.D.A. FORD KIA HYUNDAI CRA. 48 SUR No.93-85<br>CASATORO MAZDA RENAULT VW AV MIROLINDO KM3<br>DINISSAN Nissan CARRERA 8 SUR NO. 49-41<br>DISTOYOTA TOYOTA ZONA INDUSTRIAL EL PAPAYO"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-74.803141,4.304596,0]},"properties":{"name":"Girardot","description":{"@type":"html","value":"COLTOLIMA GIRARDOT CHEVROLET Carrera 10 N0 19-45<br>AUTOS BENCAR RENAULT Calle 22 No 8-14"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.911629,4.747221,0]},"properties":{"name":"Cartago","description":{"@type":"html","value":"LOS CAMPEROS CARTAGO MULTIMARCA Calle 1 # 3-37 circunvalar"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.693348,4.808717,0]},"properties":{"name":"Pereira","description":{"@type":"html","value":"AUTOMOTORES LA FLORESTA MERCEDES BENZ Av 30 de agosto # 103-81<br>AUTOMOTORA DE OCCIDENTE TOYOTA Km 6 via a Cerritos<br>COLAUTOS MAZDA Av. 30 de Agosto #N° 41-71<br>CALDAS MOTOR RENAULT Calle 17 No. 16-31<br>NISSAN NISSAN Calle 25 No. 10-65 Dosquebradas<br>ARMOTOR KIA HONDA Av 30 de Agosto N°93-41<br>CAMINOS CHEVROLET Av. 30 de Agosto #95-94"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.50277,5.062974,0]},"properties":{"name":"Manizales","description":{"@type":"html","value":"ARMOTOR KIA HONDA Km. 3 Via Panamericana<br>VEHICALDAS TOYOTA FORD CRA 31 # 98 A - 15<br>CASA RESTREPO CHEVROLET Calle 84 # 12-71<br>CASA LOPEZ NISSAN Cra 23 Nro. 39-39<br>COLAUTOS MAZDA Cra 23 Nro 36-65<br>AUTOMOTRIZ CALDAS MOTOR RENAULT Cra 22 A No. 35-61"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-74.667984,5.472709,0]},"properties":{"name":"La Dorada","description":{"@type":"html","value":"AUTOMOTRIZ CALDAS MOTOR LA DORADA RENAULT Cra 2 # 21-60"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.122742,7.119349,0]},"properties":{"name":"Bucaramanga","description":{"@type":"html","value":"CAMPESA CHEVROLET LIVIANOS<br>CODIESEL CHEVROLET Y MULTIMARCA PESADOS<br>DISTOYOTA TOYOTA<br>MAYORAUTOS MAZDA<br>NISSAN TALLER NISSAN<br>SANAUTOS RENAULT"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.851932,7.061709,0]},"properties":{"name":"Barrancabermeja","description":{"@type":"html","value":"MAYORAUTOS S.A MAZDA<br>NISSAN TALLERES AUTORIZADOS<br>SANAUTOS RENAULT MULTIMARCA"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-72.49669,7.889097,0]},"properties":{"name":"Cúcuta","description":{"@type":"html","value":"AUTOMARCOL FORD<br>CAMPESA CHEVROLET<br>CODIESEL CHEVROLET LIVIANOS<br>CÚCUTA MOTORS TOYOTA<br>MAYORAUTOS MAZDA<br>SANAUTOS RENAULT"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-73.243633,10.474245,0]},"properties":{"name":"Valledupar","description":{"@type":"html","value":"Autochevrolet CHEVROLET<br>Autotropical SAS TOYOTA<br>Mayorautos MAZDA<br>Tayrona Automotriz SAS RENAULT"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-74.211023,11.240355,0]},"properties":{"name":"Santa Marta","description":{"@type":"html","value":"Autolitoral Santa Marta Chevrolet Calle 23 #4-78<br>AUTOMOTORES FUJIYAMA KIA Cra. 4 #24-37<br>Autotropical TOYOTA CRA. 4 #31-09<br>AUTOVARDI MAZDA CRA. 4 # 24-44<br>Tayrona Automotriz RENAULT AV DEL RIO # 18 45"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-74.806981,11.004107,0]},"properties":{"name":"Barranquilla","description":{"@type":"html","value":"AUTOMOTORES FUJIYAMA KIA Via 40 No 77B–59<br>AUTOTROPICAL TOYOTA RENAULT CARRERA 53 # 61-11<br>COUNTRY MOTOR Chevrolet CALLE 77 # 66-07<br>TALLERES AUTORIZADOS NISSAN CALLE 77 # 74-65<br>VEHICOSTA Chevrolet VIA 40 # 51-414<br>JANNA MOTORS Mazda Ford VIA 40 # 69-40"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.483231,10.393228,0]},"properties":{"name":"Cartagena","description":{"@type":"html","value":"AUTOMOTORES FUJIYAMA KIA SSANGYONG Variante Turbaco<br>AUTOVARDI MAZDA AV PEDRO DE HEREDIA CL 30 # 37-07<br>BARU MOTORS FORD Paseo Bolivar Cra. 17 N° 35-105<br>JUANAUTOS EL CERRO Toyota Renault Variante Cartagena<br>SANAUTOS CRA. 83 NO.26-18 BARRIO SAN FERNANDO<br>VEHICOSTA CHEVROLET PIE DEL CERRO CL 30 # 18A-04"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.390557,9.304577,0]},"properties":{"name":"Sincelejo","description":{"@type":"html","value":"Auto Roble Toyota CR 25 # 25 189<br>Casa Británica RENAULT Transversal 6 # 32–145<br>Country Motors Chevrolet Calle 38 No 5-236"}},"styleUrl":"#icon-1899-DB4436"},{"type":"Feature","geometry":{"type":"Point","coordinates":[-75.878535,8.750983,0]},"properties":{"name":"Montería","description":{"@type":"html","value":"AUTOROBLE TOYOTA LEXUS CR 2 # 45-327<br>AUTOVARDI MAZDA calle 77 # 5-172<br>BARU MOTORS FORD Cra. 2 #No. 44-50<br>CASA BRITANICA KIA RENAULT SUZUKI Cl 72 # 6-22<br>COUNTRY MOTOR CHEVROLET KM 3 VIA MONTERIA CERETÉ"}},"styleUrl":"#icon-1899-DB4436"}]};
+
+let map;
+let marcadoresGrupo = [];
+let origenMarker = null;
+let destinoMarker = null;
+let listaTalleresCalculados = [];
+let cacheCoordsOrigen = null;
+let cacheCoordsDestino = null;
+let controlRuta = null;
+
+const carIcon = L.divIcon({
+    html: '<div style="font-size: 24px; text-align:center; transform: translate(-10%, -20%);">🚗</div>',
+    className: 'custom-car-icon',
+    iconSize: [30, 30]
+});
+
+function controlarVistasPorProducto() {
+    const seleccion = document.getElementById('selector-producto').value;
+    const bloqueMapa = document.getElementById('bloque-mapa-operativo');
+    const contenedorMsg = document.getElementById('mensaje-estado-producto');
+
+    // Resetear vistas previas
+    bloqueMapa.style.display = "none";
+    contenedorMsg.style.display = "none";
+
+    if (seleccion === "clasica") {
+        bloqueMapa.style.display = "block";
+        if (!map) {
+            initMap();
+        } else {
+            setTimeout(() => { map.invalidateSize(); }, 50); 
+        }
+    } else if (seleccion === "pesados" || seleccion === "motos") {
+        contenedorMsg.innerText = "⏳ Pendiente de anexar datos";
+        contenedorMsg.style.display = "block";
+    } else if (seleccion === "global") {
+        contenedorMsg.innerText = "⚙️ Redireccionando al módulo de Autos y Motos Global...";
+        contenedorMsg.style.display = "block";
+        
+        // 📌 Cambia 'modulo_global.html' por la ruta o URL correcta de tu archivo de Global
+        setTimeout(() => {
+            window.location.href = "modulo_global.html";
+        }, 800);
+    }
+}
+
+function initMap() {
+    map = L.map('mapa-talleres').setView([4.570868, -74.297333], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    talleresGeoJSON.features.forEach(taller => {
+        const coords = taller.geometry.coordinates;
+        const marker = L.marker([coords[1], coords[0]], { icon: carIcon }).addTo(map);
+        marcadoresGrupo.push({ marker, name: taller.properties.name });
+    });
+}
+
+function calcularDistanciaKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function obtenerCoordenadas(inputString) {
+    const limpio = inputString.trim();
+
+    if (limpio.includes('maps.google') || limpio.startsWith('http')) {
+        const regexUrlCoords = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+        const match = limpio.match(regexUrlCoords);
+        if (match) {
+            return { lat: parseFloat(match[1]), lon: parseFloat(match[2]), texto: "Coordenadas desde Link de Maps" };
+        }
+    }
+
+    const regexCoords = /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/;
+    if (regexCoords.test(limpio)) {
+        const [lat, lon] = limpio.split(',').map(Number);
+        return { lat, lon, texto: limpio };
+    }
+
+    try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=co&q=${encodeURIComponent(limpio)}`;
+        const response = await fetch(url, { headers: { 'Accept-Language': 'es' } });
+        const data = await response.json();
+        if (data && data.length > 0) {
+            return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), texto: data[0].display_name };
+        }
+    } catch (error) {
+        console.error(error);
+    }
+    return null;
+}
+
+function normalizarTexto(texto) {
+    return texto
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, "");
+}
+
+function validarMismaAreaMetropolitana(textoOrigen, textoDestino, zonaTaller) {
+    const oriComponentes = textoOrigen.split(',').map(c => normalizarTexto(c));
+    const destComponentes = textoDestino.split(',').map(c => normalizarTexto(c));
+    const tallerLimpio = normalizarTexto(zonaTaller);
+    
+    for (const area of Object.keys(areasMetropolitanas)) {
+        const listaMunicipios = areasMetropolitanas[area];
+        const origenValido = listaMunicipios.some(m => oriComponentes.includes(m));
+        const destinoValido = listaMunicipios.some(m => destComponentes.includes(m));
+        const areaTallerLimpio = normalizarTexto(area);
+        const tallerCoincideConGrupo = tallerLimpio.includes(areaTallerLimpio) || listaMunicipios.some(m => tallerLimpio.includes(m));
+
+        if (origenValido && destinoValido && tallerCoincideConGrupo) {
+            return true; 
+        }
+    }
+    return false;
+}
+
+async function procesarYCalcular() {
+    const origenRaw = document.getElementById('origen-coords').value;
+    const destinoRaw = document.getElementById('destino-coords').value;
+
+    if (!origenRaw) {
+        alert("Por favor, introduce una dirección o Pin de origen.");
+        return;
+    }
+
+    cacheCoordsOrigen = await obtenerCoordenadas(origenRaw);
+    if (!cacheCoordsOrigen) {
+        alert("No se pudo procesar la ubicación de origen.");
+        return;
+    }
+
+    if (origenMarker) map.removeLayer(origenMarker);
+    origenMarker = L.circleMarker([cacheCoordsOrigen.lat, cacheCoordsOrigen.lon], {
+        radius: 10, fillColor: "#28a745", color: "#fff", weight: 2, fillOpacity: 1
+    }).addTo(map).bindPopup("<b>Origen</b>");
+
+    cacheCoordsDestino = null;
+    if (destinoRaw.trim() !== "") {
+        cacheCoordsDestino = await obtenerCoordenadas(destinoRaw);
+        if (cacheCoordsDestino) {
+            if (destinoMarker) map.removeLayer(destinoMarker);
+            destinoMarker = L.circleMarker([cacheCoordsDestino.lat, cacheCoordsDestino.lon], {
+                radius: 10, fillColor: "#007bff", color: "#fff", weight: 2, fillOpacity: 1
+            }).addTo(map).bindPopup("<b>Destino</b>");
+        }
+    } else if (destinoMarker) {
+        map.removeLayer(destinoMarker);
+        destinoMarker = null;
+    }
+
+    listaTalleresCalculados = talleresGeoJSON.features.map(taller => {
+        const dist = calcularDistanciaKm(cacheCoordsOrigen.lat, cacheCoordsOrigen.lon, taller.geometry.coordinates[1], taller.geometry.coordinates[0]);
+        return { ...taller, distanciaOrigen: dist };
+    });
+
+    listaTalleresCalculados.sort((a, b) => a.distanciaOrigen - b.distanciaOrigen);
+
+    document.getElementById('contenedor-resultados').style.display = "block";
+    
+    const tablaCuerpo = document.getElementById('tabla-talleres-cuerpo');
+    tablaCuerpo.innerHTML = "";
+    listaTalleresCalculados.forEach((taller, index) => {
+        const fila = document.createElement('tr');
+        fila.style.borderBottom = "1px solid #dee2e6";
+        fila.innerHTML = `
+            <td style="padding: 8px;"><b>Zona ${taller.properties.name}</b> ${index === 0 ? '⭐ (Más cercano)' : ''}</td>
+            <td style="padding: 8px;">${taller.distanciaOrigen.toFixed(2)} Km</td>
+            <td style="padding: 8px; text-align: center;">
+                <button onclick="seleccionarTaller(${index})" style="padding: 4px 10px; background-color: #e9ecef; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size:12px;">Ver info 🚗</button>
+            </td>
+        `;
+        tablaCuerpo.appendChild(fila);
+    });
+
+    seleccionarTaller(0);
+}
+
+function seleccionarTaller(index) {
+    const taller = listaTalleresCalculados[index];
+    
+    document.getElementById('res-dir-actual').innerText = cacheCoordsOrigen.texto;
+    document.getElementById('res-dir-destino').innerText = cacheCoordsDestino ? cacheCoordsDestino.texto : "No provista";
+    document.getElementById('res-dist-taller').innerText = `${taller.distanciaOrigen.toFixed(2)} Km`;
+
+    if (controlRuta) {
+        map.removeControl(controlRuta);
+        controlRuta = null;
+    }
+
+    const campoExcedente = document.getElementById('res-excedente');
+    const textoDestinoValidar = cacheCoordsDestino ? cacheCoordsDestino.texto : "";
+    const aplicaAreaMetropolitana = validarMismaAreaMetropolitana(cacheCoordsOrigen.texto, textoDestinoValidar, taller.properties.name);
+
+    if (cacheCoordsDestino) {
+        controlRuta = L.Routing.control({
+            waypoints: [
+                L.latLng(cacheCoordsOrigen.lat, cacheCoordsOrigen.lon),
+                L.latLng(cacheCoordsDestino.lat, cacheCoordsDestino.lon)
+            ],
+            router: L.Routing.osrmv1({
+                serviceUrl: `https://router.project-osrm.org/route/v1`
+            }),
+            createMarker: function() { return null; }, 
+            show: false, 
+            addWaypoints: false, 
+            fitSelectedRoutes: false, 
+            lineOptions: {
+                styles: [
+                    { color: '#0056b3', opacity: 0.85, weight: 6 } // Línea continua de color azul estético
+                ]
+            }
+        }).addTo(map);
+
+        controlRuta.on('routesfound', function(e) {
+            const routes = e.routes;
+            const summary = routes[0].summary;
+            const distDestinoReal = summary.totalDistance / 1000; 
+
+            document.getElementById('res-dist-destino').innerText = `${distDestinoReal.toFixed(2)} Km (Vía real)`;
+
+            if (aplicaAreaMetropolitana) {
+                campoExcedente.innerText = "Sin costo de excedente (Beneficio de Área Metropolitana)";
+                campoExcedente.style.color = "#28a745";
+            } else {
+                const operacionExcedente = distDestinoReal - taller.distanciaOrigen;
+                if (operacionExcedente <= 0) {
+                    campoExcedente.innerText = "Sin costo de excedente";
+                    campoExcedente.style.color = "#28a745";
+                } else {
+                    campoExcedente.innerText = `${operacionExcedente.toFixed(2)} Km adicionales a asumir`;
+                    campoExcedente.style.color = "#dc3545";
+                }
+            }
+
+            // Encuadra y acerca el mapa dinámicamente al trayecto calculado
+            const bounds = L.latLngBounds(routes[0].coordinates);
+            map.fitBounds(bounds, { padding: [50, 50] });
+        });
+
+    } else {
+        document.getElementById('res-dist-destino').innerText = "N/A (Provee un destino)";
+        campoExcedente.innerText = "N/A (Falta dirección destino)";
+        campoExcedente.style.color = "#999";
+    }
+
+    const esElMasCercano = index === 0;
+    const notaMetropolitana = aplicaAreaMetropolitana ? "<br><span style='color:#155724; background-color:#d4edda; padding:2px 5px; border-radius:3px; font-size:12px;'>✓ Ruta cubierta enteramente dentro del Área Metropolitana</span>" : "";
+    
+    document.getElementById('alerta-taller').innerHTML = `⚠️ INFO DEL TALLER ${esElMasCercano ? 'MÁS CERCANO' : 'SELECCIONADO'}:<br>
+    Zona: ${taller.properties.name} (A ${taller.distanciaOrigen.toFixed(2)} Kilómetros desde tu origen)${notaMetropolitana}<br>
+    Puntos de atención de la zona:<br>
+    <div style="font-weight:normal; font-size:13px; margin-top:6px; line-height: 1.4;">${taller.properties.description.value}</div>`;
+
+    const tLat = taller.geometry.coordinates[1];
+    const tLon = taller.geometry.coordinates[0];
+    
+    if (!cacheCoordsDestino) {
+        map.setView([tLat, tLon], 14);
+    }
+}
+</script>
+
+</body>
+</html>
