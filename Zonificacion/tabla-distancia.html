@@ -20,7 +20,7 @@
 </div>
 
 <script>
-// 1. TUS DATOS (Ya integrados aquí)
+// Tu base de datos organizada
 const DATA = [
     { origen: "MEDELLIN (ANTIOQUIA)", destino: "ABEJORRAL (ANTIOQUIA)", km: 86, zr: 0, zd: 0, conv: 0, notas: "0" },
     { origen: "CUCUTA (NORTE DE SANTANDER)", destino: "ABREGO (NORTE DE SANTANDER)", km: 168, zr: 140, zd: 0, conv: 80, notas: "0" },
@@ -31,14 +31,15 @@ const DATA = [
 
 let DB = {};
 
-function iniciarBuscador() {
-    // Procesar datos
+function iniciarSistema() {
+    // 1. Organizar la base de datos en memoria
     DATA.forEach(item => {
         if(!DB[item.origen]) DB[item.origen] = {};
         if(!DB[item.origen][item.destino]) DB[item.origen][item.destino] = [];
         DB[item.origen][item.destino].push(item);
     });
 
+    // 2. Poblar selector Origen
     const selO = document.getElementById('select_origen_standalone');
     selO.innerHTML = '<option value="">Seleccione origen...</option>';
     Object.keys(DB).sort().forEach(o => selO.innerHTML += `<option value="${o}">${o}</option>`);
@@ -55,24 +56,24 @@ function actualizarDestinos() {
     selD.disabled = false;
 }
 
-function calcularResultados() {
+function mostrarResultados() {
     const o = document.getElementById('select_origen_standalone').value;
     const d = document.getElementById('select_destino_standalone').value;
     const cont = document.getElementById('contenedor_resultados_dinamico');
     cont.innerHTML = "";
     
-    // Aquí recorremos el array para mostrar TODAS las opciones encontradas
+    // Aquí es donde consultamos la base (DB) y mostramos CADA coincidencia
     DB[o][d].forEach((r, i) => {
         cont.innerHTML += `
-        <div style="border: 1px solid #0033a0; border-radius: 6px; margin-bottom: 10px; overflow: hidden;">
-            <div style="background: #0033a0; color: white; padding: 5px 10px; font-size: 12px;">Opción ${i + 1}</div>
-            <div style="padding: 10px; display: grid; grid-template-columns: repeat(4, 1fr); text-align: center;">
+        <div style="border: 1px solid #0033a0; border-radius: 6px; margin-bottom: 10px; padding: 10px; background: white;">
+            <div style="font-weight:bold; color:#0033a0; font-size:12px; margin-bottom:5px;">Opción ${i + 1}</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; font-size: 13px;">
                 <div><small>KM</small><br><strong>${r.km}</strong></div>
                 <div><small>ZR</small><br><strong>${r.zr}</strong></div>
                 <div><small>ZD</small><br><strong>${r.zd}</strong></div>
                 <div><small>CONV</small><br><strong>${r.conv}</strong></div>
             </div>
-            ${r.notas !== "0" ? `<div style="padding: 5px; font-size: 11px; background: #fff3cd;">Nota: ${r.notas}</div>` : ''}
+            ${r.notas !== "0" ? `<div style="margin-top:8px; padding:5px; font-size:11px; background:#fff3cd;"><strong>Nota:</strong> ${r.notas}</div>` : ''}
         </div>`;
     });
 }
