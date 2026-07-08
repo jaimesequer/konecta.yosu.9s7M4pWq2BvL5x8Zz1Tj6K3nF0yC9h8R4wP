@@ -1,17 +1,13 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Calculadora de Distancias</title>
-</head>
-<body>
-
+<!-- ============================================================ -->
+<!-- BLOQUE PARA PEGAR DIRECTO EN TU OTRA PÁGINA HTML -->
+<!-- Botón + buscador de origen/destino, todo en la misma página -->
+<!-- ============================================================ -->
 <div class="consulta-distancia-container" style="font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; box-sizing: border-box;">
-    
+
     <div style="text-align: center;">
-        <button type="button" id="btn_cargar_distancias" onclick="iniciarSistema()" 
-                style="background-color: #0033a0; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; max-width: 300px;">
-            🔍 Consultar Tabla de Distancia
+        <button type="button" id="btn_cargar_distancias" onclick="iniciarSistema()"
+                style="background-color: #0056b3; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-family: sans-serif; font-size: 16px; font-weight: bold; width: 100%; max-width: 300px; transition: background 0.3s;">
+            🔍 Consultar tabla de distancia
         </button>
     </div>
 
@@ -28,13 +24,15 @@
                 </select>
             </div>
         </div>
-        
+
         <div id="contenedor_resultados_dinamico"></div>
     </div>
 </div>
 
 <script>
 // BASE DE DATOS (Puedes agregar todas tus filas aquí)
+// Si un mismo origen+destino aparece en 2 filas, se mostrarán
+// automáticamente 2 cuadros de resultado ("Opción 1", "Opción 2", etc.)
 const DATA = [
     { origen: "MEDELLIN (ANTIOQUIA)", destino: "ABEJORRAL (ANTIOQUIA)", km: 86, zr: 0, zd: 0, conv: 0, notas: "0" },
     { origen: "CUCUTA (NORTE DE SANTANDER)", destino: "ABREGO (NORTE DE SANTANDER)", km: 168, zr: 140, zd: 0, conv: 80, notas: "0" },
@@ -42,22 +40,21 @@ const DATA = [
     { origen: "BUCARAMANGA (SANTANDER)", destino: "AGUACHICA (CESAR)", km: 186, zr: 0, zd: 0, conv: 90, notas: "0" },
     { origen: "CUCUTA (NORTE DE SANTANDER)", destino: "AGUACHICA (CESAR)", km: 257, zr: 250, zd: 0, conv: 0, notas: "0" }
 ];
-
 let DB = {};
 
 function iniciarSistema() {
     // 1. Organizar datos
+    DB = {};
     DATA.forEach(item => {
         if(!DB[item.origen]) DB[item.origen] = {};
         if(!DB[item.origen][item.destino]) DB[item.origen][item.destino] = [];
         DB[item.origen][item.destino].push(item);
     });
-
     // 2. Cargar Select Origen
     const selO = document.getElementById('select_origen_standalone');
     selO.innerHTML = '<option value="">Seleccione origen...</option>';
     Object.keys(DB).sort().forEach(o => selO.innerHTML += `<option value="${o}">${o}</option>`);
-    
+
     // 3. Mostrar UI
     document.getElementById('ui_calculadora_distancias').style.display = "block";
     document.getElementById('btn_cargar_distancias').innerText = "✅ Filtro Activado";
@@ -68,8 +65,10 @@ function actualizarDestinos() {
     const o = document.getElementById('select_origen_standalone').value;
     const selD = document.getElementById('select_destino_standalone');
     selD.innerHTML = '<option value="">Seleccione destino...</option>';
+    if (!o) { selD.disabled = true; return; }
     Object.keys(DB[o]).sort().forEach(d => selD.innerHTML += `<option value="${d}">${d}</option>`);
     selD.disabled = false;
+    document.getElementById('contenedor_resultados_dinamico').innerHTML = "";
 }
 
 function mostrarResultados() {
@@ -77,8 +76,9 @@ function mostrarResultados() {
     const d = document.getElementById('select_destino_standalone').value;
     const cont = document.getElementById('contenedor_resultados_dinamico');
     cont.innerHTML = "";
-    
-    // Bucle para dibujar CADA cuadro encontrado
+    if (!o || !d) return;
+
+    // Bucle para dibujar CADA cuadro encontrado (soporta múltiples coincidencias)
     DB[o][d].forEach((r, i) => {
         cont.innerHTML += `
         <div style="background: #ffffff; border: 1px solid #0033a0; border-radius: 6px; margin-bottom: 15px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
@@ -96,6 +96,3 @@ function mostrarResultados() {
     });
 }
 </script>
-
-</body>
-</html>
