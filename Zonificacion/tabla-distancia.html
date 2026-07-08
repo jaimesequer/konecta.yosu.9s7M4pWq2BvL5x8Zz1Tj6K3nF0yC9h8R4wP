@@ -2,166 +2,104 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Base de Datos: Tabla de Distancias</title>
+    <title>Calculadora de Distancias</title>
     <style>
-        body {
-            font-family: sans-serif;
-            margin: 20px;
-            background-color: #f4f6f9;
-            color: #333;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        h2 {
-            color: #0033a0;
-            border-bottom: 2px solid #0033a0;
-            padding-bottom: 8px;
-        }
-        .info-nota {
-            background-color: #e8f4fd;
-            border-left: 4px solid #0056b3;
-            padding: 10px;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            font-size: 13px;
-        }
-        th {
-            background-color: #0033a0;
-            color: white;
-            text-align: left;
-            padding: 10px;
-            font-weight: bold;
-        }
-        td {
-            padding: 8px 10px;
-            border-bottom: 1px solid #ddd;
-        }
-        tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-        tr:hover {
-            background-color: #f1f5f9;
-        }
+        body { font-family: sans-serif; background-color: #f4f6f9; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 6px; border: 1px solid #ccc; }
+        .card { margin-top: 15px; border: 1px solid #0033a0; border-radius: 8px; overflow: hidden; }
+        .card-header { background: #0033a0; color: white; padding: 5px 10px; font-size: 12px; font-weight: bold; }
+        .card-body { padding: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; text-align: center; }
+        .nota { padding: 8px; font-size: 12px; background: #fff3cd; border-top: 1px solid #ffeeba; color: #856404; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Matriz Base de Datos de Distancias</h2>
-    <div class="info-nota">
-        <strong>Nota del Sistema:</strong> Este artículo funciona como repositorio centralizado de datos. No modificar la estructura de las etiquetas de la tabla para evitar fallos de sincronización con herramientas externas.
-    </div>
+    <h3>Consulta de Distancias</h3>
+    <label>Origen:</label>
+    <select id="sel_origen" onchange="actualizarDestinos()"><option value="">Seleccione...</option></select>
+    
+    <label>Destino:</label>
+    <select id="sel_destino" onchange="calcular()" disabled><option value="">Seleccione origen primero...</option></select>
 
-    <table id="tabla_maestra_distancias">
-        <thead>
-            <tr>
-                <th>Origen</th>
-                <th>Destino</th>
-                <th>KM Total</th>
-                <th>ZR</th>
-                <th>ZD</th>
-                <th>Conv</th>
-                <th>Notas</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr data-origen="MEDELLIN (ANTIOQUIA)" data-destino="ABEJORRAL (ANTIOQUIA)">
-                <td>MEDELLIN (ANTIOQUIA)</td>
-                <td>ABEJORRAL (ANTIOQUIA)</td>
-                <td>86</td>
-                <td>0</td>
-                <td>0</td>
-                <td>0</td>
-                <td>0</td>
-            </tr>
-            <tr data-origen="CUCUTA (NORTE DE SANTANDER)" data-destino="ABREGO (NORTE DE SANTANDER)">
-                <td>CUCUTA (NORTE DE SANTANDER)</td>
-                <td>ABREGO (NORTE DE SANTANDER)</td>
-                <td>168</td>
-                <td>140</td>
-                <td>0</td>
-                <td>80</td>
-                <td>0</td>
-            </tr>
-            <tr data-origen="MEDELLIN (ANTIOQUIA)" data-destino="ABRIAQUI (ANTIOQUIA)">
-                <td>MEDELLIN (ANTIOQUIA)</td>
-                <td>ABRIAQUI (ANTIOQUIA)</td>
-                <td>139</td>
-                <td>0</td>
-                <td>0</td>
-                <td>70</td>
-                <td>0</td>
-            </tr>
-            <tr data-origen="BOGOTA (CUNDINAMARCA)" data-destino="ACACIAS (META)">
-                <td>BOGOTA (CUNDINAMARCA)</td>
-                <td>ACACIAS (META)</td>
-                <td>160</td>
-                <td>0</td>
-                <td>0</td>
-                <td>0</td>
-                <td>0</td>
-            </tr>
-            <tr data-origen="VILLAVICENCIO (META)" data-destino="ACACIAS (META)">
-                <td>VILLAVICENCIO (META)</td>
-                <td>ACACIAS (META)</td>
-                <td>29</td>
-                <td>0</td>
-                <td>0</td>
-                <td>20</td>
-                <td>TARIFA PACTADA POR COSTO DE PEAJES (VIA VILLAO- ACACIAS)</td>
-            </tr>
-            <tr data-origen="GARZON (HUILA )" data-destino="ACEVEDO (HUILA )">
-                <td>GARZON (HUILA )</td>
-                <td>ACEVEDO (HUILA )</td>
-                <td>66</td>
-                <td>0</td>
-                <td>13</td>
-                <td>0</td>
-                <td>0</td>
-            </tr>
-            <tr data-origen="NEIVA (HUILA)" data-destino="ACEVEDO (HUILA )">
-                <td>NEIVA (HUILA)</td>
-                <td>ACEVEDO (HUILA )</td>
-                <td>180</td>
-                <td>0</td>
-                <td>13</td>
-                <td>0</td>
-                <td>0</td>
-            </tr>
-            <tr data-origen="PITALITO (HUILA)" data-destino="ACEVEDO (HUILA )">
-                <td>PITALITO (HUILA)</td>
-                <td>ACEVEDO (HUILA )</td>
-                <td>30</td>
-                <td>30</td>
-                <td>30</td>
-                <td>0</td>
-                <td>SERVICIO GRÚA LIVIANO ESTOS ADICIONALES SÓLO APLICAN PARA EL PROVEEDOR SERVIGRUAS PITALITO</td>
-            </tr>
-            <tr data-origen="CALI (VALLE DEL CAUCA)" data-destino="ACUEDUCTO LA REFORMA (VALLE DEL CAUCA)">
-                <td>CALI (VALLE DEL CAUCA)</td>
-                <td>ACUEDUCTO LA REFORMA (VALLE DEL CAUCA)</td>
-                <td>7</td>
-                <td>5</td>
-                <td>0</td>
-                <td>25</td>
-                <td>0</td>
-            </tr>
-
-            </tbody>
-    </table>
+    <div id="contenedor_resultados"></div>
 </div>
 
+<script>
+const DATA = [
+    { origen: "MEDELLIN (ANTIOQUIA)", destino: "ABEJORRAL (ANTIOQUIA)", km: 86, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "CUCUTA (NORTE DE SANTANDER)", destino: "ABREGO (NORTE DE SANTANDER)", km: 168, zr: 140, zd: 0, conv: 80, notas: "0" },
+    { origen: "MEDELLIN (ANTIOQUIA)", destino: "ABRIAQUI (ANTIOQUIA)", km: 139, zr: 0, zd: 0, conv: 70, notas: "0" },
+    { origen: "BOGOTA (CUNDINAMARCA)", destino: "ACACIAS (META)", km: 160, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "VILLAVICENCIO (META)", destino: "ACACIAS (META)", km: 29, zr: 0, zd: 0, conv: 20, notas: "TARIFA PACTADA POR COSTO DE PEAJES (VIA VILLAO- ACACIAS)" },
+    { origen: "GARZON (HUILA )", destino: "ACEVEDO (HUILA )", km: 66, zr: 0, zd: 13, conv: 0, notas: "0" },
+    { origen: "NEIVA (HUILA)", destino: "ACEVEDO (HUILA )", km: 180, zr: 0, zd: 13, conv: 0, notas: "0" },
+    { origen: "PITALITO (HUILA)", destino: "ACEVEDO (HUILA )", km: 30, zr: 30, zd: 30, conv: 0, notas: "SERVICIO GRÚA LIVIANO ESTOS ADICIONALES SÓLO APLICAN PARA EL PROVEEDOR SERVIGRUAS PITALITO" },
+    { origen: "CALI (VALLE DEL CAUCA)", destino: "ACUEDUCTO LA REFORMA (VALLE DEL CAUCA)", km: 7, zr: 5, zd: 0, conv: 25, notas: "0" },
+    { origen: "MEDELLIN (ANTIOQUIA)", destino: "AEROPUERTO  (ANTIOQUIA)", km: 50, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "CALI (VALLE DEL CAUCA)", destino: "AEROPUERTO (VALLE DEL CAUCA)", km: 23, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "FLORENCIA (CAQUETA)", destino: "AGUA BONITA (CAQUETA)", km: 50, zr: 0, zd: 0, conv: 20, notas: "EL CONCEPTO CONVENIO ES SOLO PARA GRÚA LIVIANO, GRÚA MOTO Y DESPLAZAMIENTO" },
+    { origen: "CUCUTA (NORTE DE SANTANDER)", destino: "AGUA CLARA (NORTE DE SANTANDER)", km: 49, zr: 40, zd: 0, conv: 240, notas: "0" },
+    { origen: "BOGOTA (CUNDINAMARCA)", destino: "AGUA DE DIOS  (CUNDINAMARCA)", km: 120, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "MELGAR (TOLIMA)", destino: "AGUA DE DIOS (TOLIMA)", km: 37, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "BOGOTA (CUNDINAMARCA)", destino: "AGUACHICA  (CESAR)", km: 525, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "BOSCONIA (CESAR)", destino: "AGUACHICA (CESAR)", km: 223, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "BOYACÁ (BOYACA)", destino: "AGUACHICA (CESAR)", km: 380, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "BUCARAMANGA (SANTANDER)", destino: "AGUACHICA (CESAR)", km: 186, zr: 0, zd: 0, conv: 90, notas: "0" },
+    { origen: "CUCUTA (NORTE DE SANTANDER)", destino: "AGUACHICA (CESAR)", km: 257, zr: 250, zd: 0, conv: 0, notas: "0" },
+    { origen: "CURUMANI (CESAR)", destino: "AGUACHICA (CESAR)", km: 113, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "IBAGUE (TOLIMA)", destino: "AGUACHICA (CESAR)", km: 592, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "MANIZALES (CALDAS)", destino: "AGUACHICA (CESAR)", km: 557, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "SAN ALBERTO (CESAR)", destino: "AGUACHICA (CESAR)", km: 71, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "SANTA MARTA (MAGDALENA)", destino: "AGUACHICA (CESAR)", km: 370, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "VALLEDUPAR (CESAR)", destino: "AGUACHICA (CESAR)", km: 284, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "MANIZALES (CALDAS)", destino: "AGUADAS (CALDAS)", km: 155, zr: 0, zd: 0, conv: 0, notas: "RECORRIDO POR LA AUTOPISTA" },
+    { origen: "MEDELLIN (ANTIOQUIA)", destino: "AGUADAS (CALDAS)", km: 121, zr: 40, zd: 0, conv: 0, notas: "0" },
+    { origen: "PEREIRA (RISARALDA)", destino: "AGUADAS (CALDAS)", km: 171, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "CUCUTA (NORTE DE SANTANDER)", destino: "AGUALASAL (NORTE DE SANTANDER)", km: 49, zr: 40, zd: 0, conv: 90, notas: "0" },
+    { origen: "ARAUCA (ARAUCA)", destino: "AGUAZUL (CASANARE )", km: 392, zr: 180, zd: 0, conv: 0, notas: "0" },
+    { origen: "YOPAL (CASANARE )", destino: "AGUAZUL (CASANARE)", km: 27, zr: 0, zd: 0, conv: 0, notas: "0" }
+];
+
+// Procesar datos para la UI
+const DB = {};
+DATA.forEach(item => {
+    if(!DB[item.origen]) DB[item.origen] = {};
+    if(!DB[item.origen][item.destino]) DB[item.origen][item.destino] = [];
+    DB[item.origen][item.destino].push(item);
+});
+
+// Poblar orígenes
+const selO = document.getElementById('sel_origen');
+Object.keys(DB).sort().forEach(o => selO.innerHTML += `<option value="${o}">${o}</option>`);
+
+function actualizarDestinos() {
+    const selD = document.getElementById('sel_destino');
+    selD.innerHTML = '<option value="">Seleccione destino...</option>';
+    const dests = Object.keys(DB[selO.value]).sort();
+    dests.forEach(d => selD.innerHTML += `<option value="${d}">${d}</option>`);
+    selD.disabled = false;
+}
+
+function calcular() {
+    const o = selO.value, d = document.getElementById('sel_destino').value;
+    const cont = document.getElementById('contenedor_resultados');
+    cont.innerHTML = "";
+    DB[o][d].forEach((r, i) => {
+        cont.innerHTML += `
+        <div class="card">
+            <div class="card-header">Opción ${i+1}</div>
+            <div class="card-body">
+                <div><small>KM</small><br><strong>${r.km}</strong></div>
+                <div><small>ZR</small><br><strong>${r.zr}</strong></div>
+                <div><small>ZD</small><br><strong>${r.zd}</strong></div>
+                <div><small>CONV</small><br><strong>${r.conv}</strong></div>
+            </div>
+            ${r.notas !== "0" ? `<div class="nota"><strong>Nota:</strong> ${r.notas}</div>` : ''}
+        </div>`;
+    });
+}
+</script>
 </body>
 </html>
