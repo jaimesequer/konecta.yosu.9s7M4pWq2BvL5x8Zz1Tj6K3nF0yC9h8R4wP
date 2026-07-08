@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base de Datos: Tabla de Distancias</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background-color: #f4f6f9;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #0033a0;
+            border-bottom: 2px solid #0033a0;
+            padding-bottom: 8px;
+        }
+        .info-nota {
+            background-color: #e8f4fd;
+            border-left: 4px solid #0056b3;
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        th {
+            background-color: #0033a0;
+            color: white;
+            text-align: left;
+            padding: 10px;
+            font-weight: bold;
+        }
+        td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tr:hover {
+            background-color: #f1f5f9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Matriz Base de Datos de Distancias</h2>
+    <div class="info-nota">
+        <strong>Nota del Sistema:</strong> Este artículo funciona como repositorio centralizado de datos. No modificar la estructura de las etiquetas de la tabla para evitar fallos de sincronización con herramientas externas.
+    </div>
+
+    <table id="tabla_maestra_distancias">
+        <thead>
+            <tr>
+                <th>Origen</th>
+                <th>Destino</th>
+                <th>KM Total</th>
+                <th>ZR</th>
+                <th>ZD</th>
+                <th>Conv</th>
+                <th>Notas</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr data-origen="MEDELLIN (ANTIOQUIA)" data-destino="ABEJORRAL (ANTIOQUIA)">
+                <td>MEDELLIN (ANTIOQUIA)</td>
+                <td>ABEJORRAL (ANTIOQUIA)</td>
+                <td>86</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+            </tr>
+            <tr data-origen="CUCUTA (NORTE DE SANTANDER)" data-destino="ABREGO (NORTE DE SANTANDER)">
+                <td>CUCUTA (NORTE DE SANTANDER)</td>
+                <td>ABREGO (NORTE DE SANTANDER)</td>
+                <td>168</td>
+                <td>140</td>
+                <td>0</td>
+                <td>80</td>
+                <td>0</td>
+            </tr>
+            <tr data-origen="MEDELLIN (ANTIOQUIA)" data-destino="ABRIAQUI (ANTIOQUIA)">
+                <td>MEDELLIN (ANTIOQUIA)</td>
+                <td>ABRIAQUI (ANTIOQUIA)</td>
+                <td>139</td>
+                <td>0</td>
+                <td>0</td>
+                <td>70</td>
+                <td>0</td>
+            </tr>
+            <tr data-origen="BOGOTA (CUNDINAMARCA)" data-destino="ACACIAS (META)">
+                <td>BOGOTA (CUNDINAMARCA)</td>
+                <td>ACACIAS (META)</td>
+                <td>160</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+                <td>0</td>
+            </tr>
+            <tr data-origen="VILLAVICENCIO (META)" data-destino="ACACIAS (META)">
+                <td>VILLAVICENCIO (META)</td>
+                <td>ACACIAS (META)</td>
+                <td>29</td>
+                <td>0</td>
+                <td>0</td>
+                <td>20</td>
+                <td>TARIFA PACTADA POR COSTO DE PEAJES (VIA VILLAO- ACACIAS)</td>
+            </tr>
+            <tr data-origen="GARZON (HUILA )" data-destino="ACEVEDO (HUILA )">
+                <td>GARZON (HUILA )</td>
+                <td>ACEVEDO (HUILA )</td>
+                <td>66</td>
+                <td>0</td>
+                <td>13</td>
+                <td>0</td>
+                <td>0</td>
+            </tr>
+            <tr data-origen="NEIVA (HUILA)" data-destino="ACEVEDO (HUILA )">
+                <td>NEIVA (HUILA)</td>
+                <td>ACEVEDO (HUILA )</td>
+                <td>180</td>
+                <td>0</td>
+                <td>13</td>
+                <td>0</td>
+                <td>0</td>
+            </tr>
+            <tr data-origen="PITALITO (HUILA)" data-destino="ACEVEDO (HUILA )">
+                <td>PITALITO (HUILA)</td>
+                <td>ACEVEDO (HUILA )</td>
+                <td>30</td>
+                <td>30</td>
+                <td>30</td>
+                <td>0</td>
+                <td>SERVICIO GRÚA LIVIANO ESTOS ADICIONALES SÓLO APLICAN PARA EL PROVEEDOR SERVIGRUAS PITALITO</td>
+            </tr>
+            <tr data-origen="CALI (VALLE DEL CAUCA)" data-destino="ACUEDUCTO LA REFORMA (VALLE DEL CAUCA)">
+                <td>CALI (VALLE DEL CAUCA)</td>
+                <td>ACUEDUCTO LA REFORMA (VALLE DEL CAUCA)</td>
+                <td>7</td>
+                <td>5</td>
+                <td>0</td>
+                <td>25</td>
+                <td>0</td>
+            </tr>
+
+            </tbody>
+    </table>
+</div>
+
+</body>
+</html>
