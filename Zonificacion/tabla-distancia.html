@@ -3,102 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <title>Calculadora de Distancias</title>
-    <style>
-        body { font-family: sans-serif; background-color: #f4f6f9; padding: 20px; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 6px; border: 1px solid #ccc; }
-        .card { margin-top: 15px; border: 1px solid #0033a0; border-radius: 8px; overflow: hidden; }
-        .card-header { background: #0033a0; color: white; padding: 5px 10px; font-size: 12px; font-weight: bold; }
-        .card-body { padding: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; text-align: center; }
-        .nota { padding: 8px; font-size: 12px; background: #fff3cd; border-top: 1px solid #ffeeba; color: #856404; }
-    </style>
 </head>
 <body>
 
-<div class="container">
-    <h3>Consulta de Distancias</h3>
-    <label>Origen:</label>
-    <select id="sel_origen" onchange="actualizarDestinos()"><option value="">Seleccione...</option></select>
+<div class="consulta-distancia-container" style="font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; box-sizing: border-box;">
     
-    <label>Destino:</label>
-    <select id="sel_destino" onchange="calcular()" disabled><option value="">Seleccione origen primero...</option></select>
+    <div style="text-align: center;">
+        <button type="button" id="btn_cargar_distancias" onclick="cargarTablaDistancias_standalone();" 
+                style="background-color: #0033a0; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; max-width: 300px;">
+            🔍 Consultar Tabla de Distancia
+        </button>
+    </div>
 
-    <div id="contenedor_resultados"></div>
+    <div id="status_consulta_dist" style="display: none; text-align: center; margin-top: 15px; font-size: 14px; color: #666; font-weight: bold;">
+        🔄 Sincronizando datos de ruta remotos...
+    </div>
+
+    <div id="ui_calculadora_distancias" style="display: none; margin-top: 20px; border-top: 2px dashed #ccc; padding-top: 15px;">
+        <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px;">
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #444;">Municipio Origen:</label>
+                <select id="select_origen_standalone" onchange="actualizarDestinosDisponibles()" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px;"></select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #444;">Municipio Destino:</label>
+                <select id="select_destino_standalone" onchange="calcularDistanciaStandalone()" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px;" disabled>
+                    <option value="" selected disabled>Primero seleccione un origen...</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="contenedor_resultados_dinamico"></div>
+    </div>
 </div>
 
 <script>
-const DATA = [
-    { origen: "MEDELLIN (ANTIOQUIA)", destino: "ABEJORRAL (ANTIOQUIA)", km: 86, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "CUCUTA (NORTE DE SANTANDER)", destino: "ABREGO (NORTE DE SANTANDER)", km: 168, zr: 140, zd: 0, conv: 80, notas: "0" },
-    { origen: "MEDELLIN (ANTIOQUIA)", destino: "ABRIAQUI (ANTIOQUIA)", km: 139, zr: 0, zd: 0, conv: 70, notas: "0" },
-    { origen: "BOGOTA (CUNDINAMARCA)", destino: "ACACIAS (META)", km: 160, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "VILLAVICENCIO (META)", destino: "ACACIAS (META)", km: 29, zr: 0, zd: 0, conv: 20, notas: "TARIFA PACTADA POR COSTO DE PEAJES (VIA VILLAO- ACACIAS)" },
-    { origen: "GARZON (HUILA )", destino: "ACEVEDO (HUILA )", km: 66, zr: 0, zd: 13, conv: 0, notas: "0" },
-    { origen: "NEIVA (HUILA)", destino: "ACEVEDO (HUILA )", km: 180, zr: 0, zd: 13, conv: 0, notas: "0" },
-    { origen: "PITALITO (HUILA)", destino: "ACEVEDO (HUILA )", km: 30, zr: 30, zd: 30, conv: 0, notas: "SERVICIO GRÚA LIVIANO ESTOS ADICIONALES SÓLO APLICAN PARA EL PROVEEDOR SERVIGRUAS PITALITO" },
-    { origen: "CALI (VALLE DEL CAUCA)", destino: "ACUEDUCTO LA REFORMA (VALLE DEL CAUCA)", km: 7, zr: 5, zd: 0, conv: 25, notas: "0" },
-    { origen: "MEDELLIN (ANTIOQUIA)", destino: "AEROPUERTO  (ANTIOQUIA)", km: 50, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "CALI (VALLE DEL CAUCA)", destino: "AEROPUERTO (VALLE DEL CAUCA)", km: 23, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "FLORENCIA (CAQUETA)", destino: "AGUA BONITA (CAQUETA)", km: 50, zr: 0, zd: 0, conv: 20, notas: "EL CONCEPTO CONVENIO ES SOLO PARA GRÚA LIVIANO, GRÚA MOTO Y DESPLAZAMIENTO" },
-    { origen: "CUCUTA (NORTE DE SANTANDER)", destino: "AGUA CLARA (NORTE DE SANTANDER)", km: 49, zr: 40, zd: 0, conv: 240, notas: "0" },
-    { origen: "BOGOTA (CUNDINAMARCA)", destino: "AGUA DE DIOS  (CUNDINAMARCA)", km: 120, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "MELGAR (TOLIMA)", destino: "AGUA DE DIOS (TOLIMA)", km: 37, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "BOGOTA (CUNDINAMARCA)", destino: "AGUACHICA  (CESAR)", km: 525, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "BOSCONIA (CESAR)", destino: "AGUACHICA (CESAR)", km: 223, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "BOYACÁ (BOYACA)", destino: "AGUACHICA (CESAR)", km: 380, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "BUCARAMANGA (SANTANDER)", destino: "AGUACHICA (CESAR)", km: 186, zr: 0, zd: 0, conv: 90, notas: "0" },
-    { origen: "CUCUTA (NORTE DE SANTANDER)", destino: "AGUACHICA (CESAR)", km: 257, zr: 250, zd: 0, conv: 0, notas: "0" },
-    { origen: "CURUMANI (CESAR)", destino: "AGUACHICA (CESAR)", km: 113, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "IBAGUE (TOLIMA)", destino: "AGUACHICA (CESAR)", km: 592, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "MANIZALES (CALDAS)", destino: "AGUACHICA (CESAR)", km: 557, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "SAN ALBERTO (CESAR)", destino: "AGUACHICA (CESAR)", km: 71, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "SANTA MARTA (MAGDALENA)", destino: "AGUACHICA (CESAR)", km: 370, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "VALLEDUPAR (CESAR)", destino: "AGUACHICA (CESAR)", km: 284, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "MANIZALES (CALDAS)", destino: "AGUADAS (CALDAS)", km: 155, zr: 0, zd: 0, conv: 0, notas: "RECORRIDO POR LA AUTOPISTA" },
-    { origen: "MEDELLIN (ANTIOQUIA)", destino: "AGUADAS (CALDAS)", km: 121, zr: 40, zd: 0, conv: 0, notas: "0" },
-    { origen: "PEREIRA (RISARALDA)", destino: "AGUADAS (CALDAS)", km: 171, zr: 0, zd: 0, conv: 0, notas: "0" },
-    { origen: "CUCUTA (NORTE DE SANTANDER)", destino: "AGUALASAL (NORTE DE SANTANDER)", km: 49, zr: 40, zd: 0, conv: 90, notas: "0" },
-    { origen: "ARAUCA (ARAUCA)", destino: "AGUAZUL (CASANARE )", km: 392, zr: 180, zd: 0, conv: 0, notas: "0" },
-    { origen: "YOPAL (CASANARE )", destino: "AGUAZUL (CASANARE)", km: 27, zr: 0, zd: 0, conv: 0, notas: "0" }
-];
+const URL_TABLA_ORIGEN = 'https://jaimesequer.github.io/konecta.yosu.9s7M4pWq2BvL5x8Zz1Tj6K3nF0yC9h8R4wP/Zonificacion/tabla-distancia.html';
+let BASE_DATOS_DISTANCIAS = {};
 
-// Procesar datos para la UI
-const DB = {};
-DATA.forEach(item => {
-    if(!DB[item.origen]) DB[item.origen] = {};
-    if(!DB[item.origen][item.destino]) DB[item.origen][item.destino] = [];
-    DB[item.origen][item.destino].push(item);
-});
+async function cargarTablaDistancias_standalone() {
+    const btn = document.getElementById('btn_cargar_distancias');
+    const status = document.getElementById('status_consulta_dist');
+    const uiCalc = document.getElementById('ui_calculadora_distancias');
 
-// Poblar orígenes
-const selO = document.getElementById('sel_origen');
-Object.keys(DB).sort().forEach(o => selO.innerHTML += `<option value="${o}">${o}</option>`);
+    status.style.display = "block";
+    btn.disabled = true;
 
-function actualizarDestinos() {
-    const selD = document.getElementById('sel_destino');
-    selD.innerHTML = '<option value="">Seleccione destino...</option>';
-    const dests = Object.keys(DB[selO.value]).sort();
-    dests.forEach(d => selD.innerHTML += `<option value="${d}">${d}</option>`);
-    selD.disabled = false;
+    try {
+        const response = await fetch(URL_TABLA_ORIGEN);
+        const htmlText = await response.text();
+        const doc = new DOMParser().parseFromString(htmlText, 'text/html');
+        const filas = doc.querySelectorAll('#tabla_maestra_distancias tbody tr');
+
+        BASE_DATOS_DISTANCIAS = {};
+
+        filas.forEach(fila => {
+            const origen = fila.getAttribute('data-origen')?.trim().toUpperCase();
+            const destino = fila.getAttribute('data-destino')?.trim().toUpperCase();
+            const celdas = fila.querySelectorAll('td');
+
+            if (origen && destino && celdas.length >= 7) {
+                if (!BASE_DATOS_DISTANCIAS[origen]) BASE_DATOS_DISTANCIAS[origen] = {};
+                if (!BASE_DATOS_DISTANCIAS[origen][destino]) BASE_DATOS_DISTANCIAS[origen][destino] = [];
+
+                BASE_DATOS_DISTANCIAS[origen][destino].push({
+                    km: celdas[2].innerText.trim(),
+                    zr: celdas[3].innerText.trim(),
+                    zd: celdas[4].innerText.trim(),
+                    conv: celdas[5].innerText.trim(),
+                    notas: celdas[6].innerText.trim()
+                });
+            }
+        });
+
+        poblarOrigenesStandalone();
+        status.style.display = "none";
+        uiCalc.style.display = "block";
+        btn.innerHTML = "✅ Filtro Activado";
+    } catch (e) {
+        status.innerText = "❌ Error: " + e.message;
+    }
 }
 
-function calcular() {
-    const o = selO.value, d = document.getElementById('sel_destino').value;
-    const cont = document.getElementById('contenedor_resultados');
-    cont.innerHTML = "";
-    DB[o][d].forEach((r, i) => {
-        cont.innerHTML += `
-        <div class="card">
-            <div class="card-header">Opción ${i+1}</div>
-            <div class="card-body">
-                <div><small>KM</small><br><strong>${r.km}</strong></div>
-                <div><small>ZR</small><br><strong>${r.zr}</strong></div>
-                <div><small>ZD</small><br><strong>${r.zd}</strong></div>
-                <div><small>CONV</small><br><strong>${r.conv}</strong></div>
-            </div>
-            ${r.notas !== "0" ? `<div class="nota"><strong>Nota:</strong> ${r.notas}</div>` : ''}
-        </div>`;
+function poblarOrigenesStandalone() {
+    const selOrigen = document.getElementById('select_origen_standalone');
+    selOrigen.innerHTML = '<option value="" selected disabled>Seleccione origen...</option>';
+    Object.keys(BASE_DATOS_DISTANCIAS).sort().forEach(o => {
+        selOrigen.innerHTML += `<option value="${o}">${o}</option>`;
     });
+}
+
+function actualizarDestinosDisponibles() {
+    const o = document.getElementById('select_origen_standalone').value;
+    const selDestino = document.getElementById('select_destino_standalone');
+    selDestino.innerHTML = '<option value="" selected disabled>Seleccione destino...</option>';
+    Object.keys(BASE_DATOS_DISTANCIAS[o]).sort().forEach(d => {
+        selDestino.innerHTML += `<option value="${d}">${d}</option>`;
+    });
+    selDestino.disabled = false;
+}
+
+function calcularDistanciaStandalone() {
+    const o = document.getElementById('select_origen_standalone').value;
+    const d = document.getElementById('select_destino_standalone').value;
+    const contenedor = document.getElementById('contenedor_resultados_dinamico');
+    
+    contenedor.innerHTML = ""; 
+    const listaRutas = BASE_DATOS_DISTANCIAS[o]?.[d];
+
+    if (listaRutas) {
+        listaRutas.forEach((ruta, index) => {
+            contenedor.innerHTML += `
+            <div style="background: #ffffff; border: 1px solid #0033a0; border-radius: 6px; margin-bottom: 15px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <div style="background-color: #0033a0; color: white; padding: 5px 12px; font-size: 12px; font-weight: bold;">Opción ${index + 1}</div>
+                <div style="padding: 15px; font-size: 14px;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; margin-bottom: 10px;">
+                        <div style="background: #f1f5f9; padding: 5px; border-radius: 4px;"><small style="display:block; font-size:9px;">KM</small><strong>${ruta.km}</strong></div>
+                        <div style="background: #f1f5f9; padding: 5px; border-radius: 4px;"><small style="display:block; font-size:9px;">ZR</small><strong>${ruta.zr}</strong></div>
+                        <div style="background: #f1f5f9; padding: 5px; border-radius: 4px;"><small style="display:block; font-size:9px;">ZD</small><strong>${ruta.zd}</strong></div>
+                        <div style="background: #f1f5f9; padding: 5px; border-radius: 4px;"><small style="display:block; font-size:9px;">CONV</small><strong>${ruta.conv}</strong></div>
+                    </div>
+                    ${ruta.notas !== "0" && ruta.notas.toLowerCase() !== "no aplica" ? 
+                      `<div style="background-color: #fff3cd; padding: 8px; font-size: 11px; color: #664d03; border-radius: 4px;"><strong>Nota:</strong> ${ruta.notas}</div>` : ''}
+                </div>
+            </div>`;
+        });
+    }
 }
 </script>
 </body>
