@@ -932,57 +932,59 @@ function copiarPagoInmediato() {
 
 
 
-
-
-
 <div style="font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; box-sizing: border-box;">
 
     <div style="text-align: center;">
-        <button type="button" id="btn_consultar_distancia" onclick="cargarTablaDistancia()"
+        <button type="button" id="btn_consultar_distancia_1" onclick="cargarTablaDistancia('1')"
                 style="background-color: #0056b3; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-family: sans-serif; font-size: 16px; font-weight: bold; width: 100%; max-width: 300px; transition: background 0.3s;">
             🔍 Consultar tabla de distancia
         </button>
     </div>
 
-    <div id="ui_calculadora_distancias" style="display: none; margin-top: 20px; border-top: 2px dashed #ccc; padding-top: 15px;">
+    <div id="ui_calculadora_distancias_1" style="display: none; margin-top: 20px; border-top: 2px dashed #ccc; padding-top: 15px;">
         <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px;">
             <div>
                 <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #444;">Municipio Origen:</label>
-                <select id="select_origen_standalone" onchange="actualizarDestinos()" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px;"></select>
+                <select id="select_origen_standalone_1" onchange="actualizarDestinos('1')" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px;"></select>
             </div>
             <div>
                 <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #444;">Municipio Destino:</label>
-                <select id="select_destino_standalone" onchange="mostrarResultados()" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px;" disabled>
+                <select id="select_destino_standalone_1" onchange="mostrarResultados('1')" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px;" disabled>
                     <option value="">Seleccione primero un origen...</option>
                 </select>
             </div>
         </div>
 
-        <div id="contenedor_resultados_dinamico"></div>
+        <div id="contenedor_resultados_dinamico_1"></div>
     </div>
 
-    <div id="msg_error_distancia" style="display:none; margin-top:15px; background:#f8d7da; color:#842029; padding:10px; border-radius:6px; font-size:13px;"></div>
+    <div id="msg_error_distancia_1" style="display:none; margin-top:15px; background:#f8d7da; color:#842029; padding:10px; border-radius:6px; font-size:13px;"></div>
 
     <div style="text-align:center; margin-top:8px;">
-        <a href="#" id="link_actualizar_datos" onclick="forzarActualizacion(); return false;" style="display:none; font-size:11px; color:#666; text-decoration:underline;">🔄 Actualizar datos</a>
+        <a href="#" id="link_actualizar_datos_1" onclick="forzarActualizacion('1'); return false;" style="display:none; font-size:11px; color:#666; text-decoration:underline;">🔄 Actualizar datos</a>
     </div>
 </div>
 
+
+<!-- ============================================================ -->
+<!-- SCRIPT ÚNICO — pégalo UNA sola vez en la página, sin importar -->
+<!-- cuántas instancias del botón tengas arriba.                  -->
+<!-- ============================================================ -->
 <script>
 // URL del archivo de datos (el que contiene "const DATA = [...]")
 const URL_DATOS_DISTANCIA = "https://jaimesequer.github.io/konecta.yosu.9s7M4pWq2BvL5x8Zz1Tj6K3nF0yC9h8R4wP/Zonificacion/tabla-distancia.html";
 
 let DATA = [];
-let DB = {};   // DB[origen][destino] = [ filas ]  -> solo el sentido tal cual está en la base de datos
+let DB = {};   // DB[origen][destino] = [ filas ]  -> sentido original tal cual está en la base de datos
 let ADJ = {};  // ADJ[municipio] = Set de municipios conectados en CUALQUIER sentido (para los selects)
 let datosYaCargados = false;
+let cargaEnProgreso = null; // evita descargar dos veces si el usuario hace clic en dos botones casi al tiempo
 
 const CACHE_KEY = 'distancias_cache_v1';
 const CACHE_TTL_MS = 1000 * 60 * 60 * 24; // 24 horas: pasado este tiempo, se vuelve a descargar
 
 // Busca "const DATA = [" y luego encuentra el "]" que realmente le corresponde,
-// contando la profundidad de corchetes y saltándose lo que esté dentro de comillas
-// (para que un "]" dentro de una nota de texto no rompa la extracción).
+// contando la profundidad de corchetes y saltándose lo que esté dentro de comillas.
 function extraerArrayDATA(texto) {
     const patron = /const\s+DATA\s*=\s*(\[\s*\{)/;
     const encontrado = texto.match(patron);
@@ -991,7 +993,7 @@ function extraerArrayDATA(texto) {
     const inicioArray = encontrado.index + encontrado[0].indexOf('[');
 
     let profundidad = 0;
-    let dentroDeString = null; // guarda el tipo de comilla activa: ' " ` o null
+    let dentroDeString = null;
     let escapando = false;
 
     for (let i = inicioArray; i < texto.length; i++) {
@@ -1022,24 +1024,20 @@ function extraerArrayDATA(texto) {
             }
         }
     }
-    return null; // no se encontró el cierre correspondiente
+    return null;
 }
 
-async function cargarTablaDistancia() {
-    const btn = document.getElementById('btn_consultar_distancia');
-    const errBox = document.getElementById('msg_error_distancia');
-    errBox.style.display = "none";
+// Descarga (o usa caché) + arma DB y ADJ. Se ejecuta UNA sola vez sin importar
+// cuántas instancias del botón hagan clic.
+async function asegurarDatosCargados() {
+    if (datosYaCargados) return;
 
-    if (datosYaCargados) {
-        document.getElementById('ui_calculadora_distancias').style.display = "block";
+    if (cargaEnProgreso) {
+        await cargaEnProgreso;
         return;
     }
 
-    btn.innerText = "⏳ Cargando datos...";
-    btn.disabled = true;
-
-    try {
-        // 1. Intentar usar la caché local
+    cargaEnProgreso = (async () => {
         let vinoDeCache = false;
         try {
             const cacheado = localStorage.getItem(CACHE_KEY);
@@ -1050,9 +1048,8 @@ async function cargarTablaDistancia() {
                     vinoDeCache = true;
                 }
             }
-        } catch (e) { /* si la caché está corrupta, simplemente se ignora */ }
+        } catch (e) { /* caché corrupta, se ignora */ }
 
-        // 2. Si no hay caché válida, descargar y extraer del archivo de datos
         if (!vinoDeCache) {
             const res = await fetch(URL_DATOS_DISTANCIA);
             if (!res.ok) throw new Error("No se pudo acceder al archivo de datos (" + res.status + ")");
@@ -1065,35 +1062,58 @@ async function cargarTablaDistancia() {
 
             try {
                 localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data: DATA }));
-            } catch (e) { /* si no hay espacio de almacenamiento, seguimos sin caché */ }
+            } catch (e) { /* sin espacio de almacenamiento, seguimos sin caché */ }
         }
 
-        // ===== CAMBIO 1: construir DB (igual que antes) + ADJ (nuevo, bidireccional) =====
         DB = {};
         ADJ = {};
         DATA.forEach(item => {
-            // DB conserva el sentido original tal cual viene en la base de datos
             if (!DB[item.origen]) DB[item.origen] = {};
             if (!DB[item.origen][item.destino]) DB[item.origen][item.destino] = [];
             DB[item.origen][item.destino].push(item);
 
-            // ADJ registra la conexión en AMBOS sentidos, solo para saber "quién se conecta con quién"
             if (!ADJ[item.origen]) ADJ[item.origen] = new Set();
             if (!ADJ[item.destino]) ADJ[item.destino] = new Set();
             ADJ[item.origen].add(item.destino);
             ADJ[item.destino].add(item.origen);
         });
 
-        // ===== CAMBIO 2: el select de Origen ahora se llena desde ADJ, no desde DB =====
-        // Así aparecen TODOS los municipios (los que solo eran "destino" en la base también entran)
-        const selO = document.getElementById('select_origen_standalone');
-        const opcionesOrigen = ['<option value="">Seleccione origen...</option>'];
-        Object.keys(ADJ).sort().forEach(o => opcionesOrigen.push(`<option value="${o}">${o}</option>`));
-        selO.innerHTML = opcionesOrigen.join('');
-
         datosYaCargados = true;
-        document.getElementById('ui_calculadora_distancias').style.display = "block";
-        document.getElementById('link_actualizar_datos').style.display = "inline";
+    })();
+
+    await cargaEnProgreso;
+}
+
+function llenarSelectOrigen(instancia) {
+    const selO = document.getElementById('select_origen_standalone_' + instancia);
+    const opciones = ['<option value="">Seleccione origen...</option>'];
+    Object.keys(ADJ).sort().forEach(o => opciones.push(`<option value="${o}">${o}</option>`));
+    selO.innerHTML = opciones.join('');
+}
+
+async function cargarTablaDistancia(instancia) {
+    const btn = document.getElementById('btn_consultar_distancia_' + instancia);
+    const errBox = document.getElementById('msg_error_distancia_' + instancia);
+    errBox.style.display = "none";
+
+    if (datosYaCargados) {
+        llenarSelectOrigen(instancia);
+        document.getElementById('ui_calculadora_distancias_' + instancia).style.display = "block";
+        document.getElementById('link_actualizar_datos_' + instancia).style.display = "inline";
+        btn.innerText = "✅ Filtro Activado";
+        btn.style.backgroundColor = "#28a745";
+        return;
+    }
+
+    btn.innerText = "⏳ Cargando datos...";
+    btn.disabled = true;
+
+    try {
+        await asegurarDatosCargados();
+
+        llenarSelectOrigen(instancia);
+        document.getElementById('ui_calculadora_distancias_' + instancia).style.display = "block";
+        document.getElementById('link_actualizar_datos_' + instancia).style.display = "inline";
         btn.innerText = "✅ Filtro Activado";
         btn.style.backgroundColor = "#28a745";
         btn.disabled = false;
@@ -1107,18 +1127,20 @@ async function cargarTablaDistancia() {
     }
 }
 
-function forzarActualizacion() {
+function forzarActualizacion(instancia) {
     try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
     datosYaCargados = false;
+    cargaEnProgreso = null;
     DATA = [];
-    document.getElementById('link_actualizar_datos').style.display = "none";
-    cargarTablaDistancia();
+    DB = {};
+    ADJ = {};
+    document.getElementById('link_actualizar_datos_' + instancia).style.display = "none";
+    cargarTablaDistancia(instancia);
 }
 
-// ===== CAMBIO 3: destinos ahora salen de ADJ[origen] (conexiones en cualquier sentido) =====
-function actualizarDestinos() {
-    const o = document.getElementById('select_origen_standalone').value;
-    const selD = document.getElementById('select_destino_standalone');
+function actualizarDestinos(instancia) {
+    const o = document.getElementById('select_origen_standalone_' + instancia).value;
+    const selD = document.getElementById('select_destino_standalone_' + instancia);
     if (!o || !ADJ[o]) {
         selD.innerHTML = '<option value="">Seleccione destino...</option>';
         selD.disabled = true;
@@ -1128,10 +1150,9 @@ function actualizarDestinos() {
     Array.from(ADJ[o]).sort().forEach(d => opcionesDestino.push(`<option value="${d}">${d}</option>`));
     selD.innerHTML = opcionesDestino.join('');
     selD.disabled = false;
-    document.getElementById('contenedor_resultados_dinamico').innerHTML = "";
+    document.getElementById('contenedor_resultados_dinamico_' + instancia).innerHTML = "";
 }
 
-// ===== CAMBIO 4: nueva función que busca primero el sentido normal y si no existe, el invertido =====
 function obtenerResultados(o, d) {
     if (DB[o] && DB[o][d]) {
         return { resultados: DB[o][d], invertido: false };
@@ -1142,10 +1163,10 @@ function obtenerResultados(o, d) {
     return { resultados: [], invertido: false };
 }
 
-function mostrarResultados() {
-    const o = document.getElementById('select_origen_standalone').value;
-    const d = document.getElementById('select_destino_standalone').value;
-    const cont = document.getElementById('contenedor_resultados_dinamico');
+function mostrarResultados(instancia) {
+    const o = document.getElementById('select_origen_standalone_' + instancia).value;
+    const d = document.getElementById('select_destino_standalone_' + instancia).value;
+    const cont = document.getElementById('contenedor_resultados_dinamico_' + instancia);
     cont.innerHTML = "";
     if (!o || !d) return;
 
@@ -1171,6 +1192,7 @@ function mostrarResultados() {
     });
 }
 </script>
+
 
 
 
@@ -6391,7 +6413,43 @@ function verifyGeofence() {
 
 
 
-XXXXXXXXXXXXXXX
+<!-- ============================================================ -->
+<!-- INSTANCIA 2 — sufijo "2"  (copia este bloque completo y      -->
+<!-- cambia el "2" por "3", "4"... para agregar más instancias)   -->
+<!-- ============================================================ -->
+<div style="font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; box-sizing: border-box;">
+
+    <div style="text-align: center;">
+        <button type="button" id="btn_consultar_distancia_2" onclick="cargarTablaDistancia('2')"
+                style="background-color: #0056b3; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-family: sans-serif; font-size: 16px; font-weight: bold; width: 100%; max-width: 300px; transition: background 0.3s;">
+            🔍 Consultar tabla de distancia
+        </button>
+    </div>
+
+    <div id="ui_calculadora_distancias_2" style="display: none; margin-top: 20px; border-top: 2px dashed #ccc; padding-top: 15px;">
+        <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px;">
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #444;">Municipio Origen:</label>
+                <select id="select_origen_standalone_2" onchange="actualizarDestinos('2')" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px;"></select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #444;">Municipio Destino:</label>
+                <select id="select_destino_standalone_2" onchange="mostrarResultados('2')" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px;" disabled>
+                    <option value="">Seleccione primero un origen...</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="contenedor_resultados_dinamico_2"></div>
+    </div>
+
+    <div id="msg_error_distancia_2" style="display:none; margin-top:15px; background:#f8d7da; color:#842029; padding:10px; border-radius:6px; font-size:13px;"></div>
+
+    <div style="text-align:center; margin-top:8px;">
+        <a href="#" id="link_actualizar_datos_2" onclick="forzarActualizacion('2'); return false;" style="display:none; font-size:11px; color:#666; text-decoration:underline;">🔄 Actualizar datos</a>
+    </div>
+</div>
+
 
 
 
