@@ -34,48 +34,11 @@
 <script>
 // BASE DE DATOS (Puedes agregar todas tus filas aquí)
 const DATA = [
-
-{ origen: "MEDELLIN (ANTIOQUIA)", destino: "ABEJORRAL (ANTIOQUIA)", km: 86, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "CUCUTA (NORTE DE SANTANDER)", destino: "ABREGO (NORTE DE SANTANDER)", km: 168, zr: 140, zd: 0, conv: 80, notas: "0" },
-{ origen: "MEDELLIN (ANTIOQUIA)", destino: "ABRIAQUI (ANTIOQUIA)", km: 139, zr: 0, zd: 0, conv: 70, notas: "0" },
-{ origen: "BOGOTA (CUNDINAMARCA)", destino: "ACACIAS (META)", km: 160, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "VILLAVICENCIO (META)", destino: "ACACIAS (META)", km: 29, zr: 0, zd: 0, conv: 20, notas: "TARIFA PACTADA POR COSTO DE PEAJES (VIA VILLAO- ACACIAS)" },
-{ origen: "GARZON (HUILA )", destino: "ACEVEDO (HUILA )", km: 66, zr: 0, zd: 13, conv: 0, notas: "0" },
-{ origen: "NEIVA (HUILA)", destino: "ACEVEDO (HUILA )", km: 180, zr: 0, zd: 13, conv: 0, notas: "0" },
-{ origen: "PITALITO (HUILA)", destino: "ACEVEDO (HUILA )", km: 30, zr: 30, zd: 30, conv: 0, notas: "SERVICIO GRÚA LIVIANO ESTOS ADICIONALES SÓLO APLICAN PARA EL PROVEEDOR SERVIGRUAS PITALITO" },
-{ origen: "CALI (VALLE DEL CAUCA)", destino: "ACUEDUCTO LA REFORMA (VALLE DEL CAUCA)", km: 7, zr: 5, zd: 0, conv: 25, notas: "0" },
-{ origen: "MEDELLIN (ANTIOQUIA)", destino: "AEROPUERTO  (ANTIOQUIA)", km: 50, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "CALI (VALLE DEL CAUCA)", destino: "AEROPUERTO (VALLE DEL CAUCA)", km: 23, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "FLORENCIA (CAQUETA)", destino: "AGUA BONITA (CAQUETA)", km: 50, zr: 0, zd: 0, conv: 20, notas: "EL CONCEPTO CONVENIO ES SOLO PARA GRÚA LIVIANO, GRÚA MOTO Y DESPLAZAMIENTO" },
-{ origen: "CUCUTA (NORTE DE SANTANDER)", destino: "AGUA CLARA (NORTE DE SANTANDER)", km: 49, zr: 40, zd: 0, conv: 240, notas: "0" },
-{ origen: "BOGOTA (CUNDINAMARCA)", destino: "AGUA DE DIOS  (CUNDINAMARCA)", km: 120, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "MELGAR (TOLIMA)", destino: "AGUA DE DIOS (TOLIMA)", km: 37, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "BOGOTA (CUNDINAMARCA)", destino: "AGUACHICA  (CESAR)", km: 525, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "BOSCONIA (CESAR)", destino: "AGUACHICA (CESAR)", km: 223, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "CARTAGO (VALLE DEL CAUCA)", destino: "ZARAGOZA (VALLE DEL CAUCA)", km: 7, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "CALI (VALLE DEL CAUCA)", destino: "ZARZAL  (VALLE DEL CAUCA)", km: 196, zr: 0, zd: 0, conv: 50, notas: "0" },
-{ origen: "GUADALAJARA DE BUGA (VALLE DEL CAUCA)", destino: "ZARZAL (VALLE DEL CAUCA)", km: 70, zr: 0, zd: 0, conv: 35, notas: "0" },
-{ origen: "CARTAGO (VALLE DEL CAUCA)", destino: "ZARZAL (VALLE DEL CAUCA)", km: 48, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "MANIZALES (CALDAS)", destino: "ZARZAL (VALLE DEL CAUCA)", km: 141, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "TULUA (VALLE DEL CAUCA)", destino: "ZARZAL (VALLE DEL CAUCA)", km: 44, zr: 0, zd: 0, conv: 40, notas: "CONCEPTO CONVENIO NO APLICA PARA GRUA PESADO GRANDE Y MEDIANO" },
-{ origen: "ARMENIA (QUINDIO)", destino: "ZARZAL (VALLE DEL CAUCA)", km: 61, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "BOGOTA (CUNDINAMARCA)", destino: "ZARZAL (VALLE DEL CAUCA)", km: 328, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "IBAGUE (TOLIMA)", destino: "ZARZAL (VALLE DEL CAUCA)", km: 151, zr: 0, zd: 0, conv: 47, notas: "0" },
-{ origen: "PEREIRA (RISARALDA)", destino: "ZARZAL (VALLE DEL CAUCA)", km: 78, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "BOGOTA (CUNDINAMARCA)", destino: "ZETAQUIRA (BOYACA)", km: 191, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "BOYACÁ (BOYACA)", destino: "ZETAQUIRA (BOYACA)", km: 70, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "BOGOTA (CUNDINAMARCA)", destino: "ZIPACON (CUNDINAMARCA)", km: 50, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "ARMENIA (QUINDIO)", destino: "ZIPAQUIRA (CUNDINAMARCA)", km: 314, zr: 0, zd: 0, conv: 157, notas: "ESTE CONVENIO APLICA PARA GRUA LIVIANA GRUA, MOTO Y DESPLAZAMIENTO NO APLICA PARA GRUA PESADOS" },
-{ origen: "BOGOTA (CUNDINAMARCA)", destino: "ZIPAQUIRA (CUNDINAMARCA)", km: 57, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "CARTAGO (VALLE DEL CAUCA)", destino: "ZIPAQUIRA (CUNDINAMARCA)", km: 364, zr: 0, zd: 0, conv: 182, notas: "SERVICIO GRÚA LIVIANO Y DESPLAZAMIENTO ESTOS ADICIONALES SÓLO APLICAN PARA EL PROVEEDOR ASSIST GRUAS CARTAGO NO APLICA PARA TARIFA EN PESADOS" },
-{ origen: "MANIZALES (CALDAS)", destino: "ZIPAQUIRA (CUNDINAMARCA)", km: 336, zr: 0, zd: 0, conv: 182, notas: "APLICA PARA GRUA LIVIANA GRUA MOTO Y DESPLAZAMIENTO NO APLICA PARA GRUA PESADOS" },
-{ origen: "PEREIRA (RISARALDA)", destino: "ZIPAQUIRA (CUNDINAMARCA)", km: 355, zr: 0, zd: 0, conv: 192, notas: "ESTE CONVENIO APLICA PARA GRÚA LIVIANA ,GRÚA MOTO Y DESPLAZAMIENTO NO APLICA PARA GRUA PESADOS" },
-{ origen: "YOPAL (CASANARE )", destino: "ZIPAQUIRA (CUNDINAMARCA)", km: 316, zr: 0, zd: 60, conv: 0, notas: "0" },
-{ origen: "ARAUCA (ARAUCA)", destino: "ZIPAQUIRA (CUNDINAMARCA)", km: 700, zr: 180, zd: 60, conv: 0, notas: "0" },
-{ origen: "BOGOTA (CUNDINAMARCA)", destino: "ZOOLOGICO SANTA CRUZ (CUNDINAMARCA)", km: 42, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "BOGOTA (CUNDINAMARCA)", destino: "ZOTAQUIRA (BOYACA)", km: 248, zr: 0, zd: 0, conv: 0, notas: "0" },
-{ origen: "GARZON (HUILA )", destino: "ZULUAGA (HUILA )", km: 23, zr: 0, zd: 0, conv: 0, notas: "0" }
-
+    { origen: "MEDELLIN (ANTIOQUIA)", destino: "ABEJORRAL (ANTIOQUIA)", km: 86, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "CUCUTA (NORTE DE SANTANDER)", destino: "ABREGO (NORTE DE SANTANDER)", km: 168, zr: 140, zd: 0, conv: 80, notas: "0" },
+    { origen: "BOGOTA (CUNDINAMARCA)", destino: "AGUACHICA (CESAR)", km: 525, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "BUCARAMANGA (SANTANDER)", destino: "AGUACHICA (CESAR)", km: 186, zr: 0, zd: 0, conv: 90, notas: "0" },
+    { origen: "CUCUTA (NORTE DE SANTANDER)", destino: "AGUACHICA (CESAR)", km: 257, zr: 250, zd: 0, conv: 0, notas: "0" }
 ];
 let DB = {};
 
