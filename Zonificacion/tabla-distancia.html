@@ -1,30 +1,44 @@
-<div style="text-align: center; margin: 20px 0;">
-    <button type="button" id="btn_cargar_distancias" onclick="iniciarBuscador()" 
-            style="background-color: #0033a0; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; transition: background 0.3s;">
-        🔍 Consultar Tabla de Distancia
-    </button>
-</div>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora de Distancias</title>
+</head>
+<body>
 
-<div id="ui_calculadora_distancias" style="display: none; max-width: 600px; margin: 20px auto; border-top: 2px dashed #ccc; padding-top: 15px;">
-    <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px;">
-        <div>
-            <label style="font-size: 13px; font-weight: bold; color: #444;">Municipio Origen:</label>
-            <select id="select_origen_standalone" onchange="actualizarDestinos()" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc;"></select>
-        </div>
-        <div>
-            <label style="font-size: 13px; font-weight: bold; color: #444;">Municipio Destino:</label>
-            <select id="select_destino_standalone" onchange="calcularResultados()" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc;" disabled></select>
-        </div>
+<div class="consulta-distancia-container" style="font-family: sans-serif; max-width: 600px; margin: 20px auto; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; box-sizing: border-box;">
+    
+    <div style="text-align: center;">
+        <button type="button" id="btn_cargar_distancias" onclick="iniciarSistema()" 
+                style="background-color: #0033a0; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; max-width: 300px;">
+            🔍 Consultar Tabla de Distancia
+        </button>
     </div>
-    <div id="contenedor_resultados_dinamico"></div>
+
+    <div id="ui_calculadora_distancias" style="display: none; margin-top: 20px; border-top: 2px dashed #ccc; padding-top: 15px;">
+        <div style="display: grid; grid-template-columns: 1fr; gap: 15px; margin-bottom: 15px;">
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #444;">Municipio Origen:</label>
+                <select id="select_origen_standalone" onchange="actualizarDestinos()" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px;"></select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #444;">Municipio Destino:</label>
+                <select id="select_destino_standalone" onchange="mostrarResultados()" style="width: 100%; padding: 8px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 13px;" disabled>
+                    <option value="">Seleccione primero un origen...</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="contenedor_resultados_dinamico"></div>
+    </div>
 </div>
 
 <script>
-// Tu base de datos organizada
+// BASE DE DATOS (Puedes agregar todas tus filas aquí)
 const DATA = [
     { origen: "MEDELLIN (ANTIOQUIA)", destino: "ABEJORRAL (ANTIOQUIA)", km: 86, zr: 0, zd: 0, conv: 0, notas: "0" },
     { origen: "CUCUTA (NORTE DE SANTANDER)", destino: "ABREGO (NORTE DE SANTANDER)", km: 168, zr: 140, zd: 0, conv: 80, notas: "0" },
-    { origen: "BOGOTA (CUNDINAMARCA)", destino: "AGUACHICA  (CESAR)", km: 525, zr: 0, zd: 0, conv: 0, notas: "0" },
+    { origen: "BOGOTA (CUNDINAMARCA)", destino: "AGUACHICA (CESAR)", km: 525, zr: 0, zd: 0, conv: 0, notas: "0" },
     { origen: "BUCARAMANGA (SANTANDER)", destino: "AGUACHICA (CESAR)", km: 186, zr: 0, zd: 0, conv: 90, notas: "0" },
     { origen: "CUCUTA (NORTE DE SANTANDER)", destino: "AGUACHICA (CESAR)", km: 257, zr: 250, zd: 0, conv: 0, notas: "0" }
 ];
@@ -32,20 +46,22 @@ const DATA = [
 let DB = {};
 
 function iniciarSistema() {
-    // 1. Organizar la base de datos en memoria
+    // 1. Organizar datos
     DATA.forEach(item => {
         if(!DB[item.origen]) DB[item.origen] = {};
         if(!DB[item.origen][item.destino]) DB[item.origen][item.destino] = [];
         DB[item.origen][item.destino].push(item);
     });
 
-    // 2. Poblar selector Origen
+    // 2. Cargar Select Origen
     const selO = document.getElementById('select_origen_standalone');
     selO.innerHTML = '<option value="">Seleccione origen...</option>';
     Object.keys(DB).sort().forEach(o => selO.innerHTML += `<option value="${o}">${o}</option>`);
     
+    // 3. Mostrar UI
     document.getElementById('ui_calculadora_distancias').style.display = "block";
     document.getElementById('btn_cargar_distancias').innerText = "✅ Filtro Activado";
+    document.getElementById('btn_cargar_distancias').style.backgroundColor = "#28a745";
 }
 
 function actualizarDestinos() {
@@ -62,19 +78,24 @@ function mostrarResultados() {
     const cont = document.getElementById('contenedor_resultados_dinamico');
     cont.innerHTML = "";
     
-    // Aquí es donde consultamos la base (DB) y mostramos CADA coincidencia
+    // Bucle para dibujar CADA cuadro encontrado
     DB[o][d].forEach((r, i) => {
         cont.innerHTML += `
-        <div style="border: 1px solid #0033a0; border-radius: 6px; margin-bottom: 10px; padding: 10px; background: white;">
-            <div style="font-weight:bold; color:#0033a0; font-size:12px; margin-bottom:5px;">Opción ${i + 1}</div>
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; font-size: 13px;">
-                <div><small>KM</small><br><strong>${r.km}</strong></div>
-                <div><small>ZR</small><br><strong>${r.zr}</strong></div>
-                <div><small>ZD</small><br><strong>${r.zd}</strong></div>
-                <div><small>CONV</small><br><strong>${r.conv}</strong></div>
+        <div style="background: #ffffff; border: 1px solid #0033a0; border-radius: 6px; margin-bottom: 15px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <div style="background-color: #0033a0; color: white; padding: 5px 12px; font-size: 12px; font-weight: bold;">Opción ${i + 1}</div>
+            <div style="padding: 15px; font-size: 14px;">
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center; margin-bottom: 10px;">
+                    <div style="background: #f1f5f9; padding: 5px; border-radius: 4px;"><small style="display:block; font-size:9px;">KM</small><strong>${r.km}</strong></div>
+                    <div style="background: #f1f5f9; padding: 5px; border-radius: 4px;"><small style="display:block; font-size:9px;">ZR</small><strong>${r.zr}</strong></div>
+                    <div style="background: #f1f5f9; padding: 5px; border-radius: 4px;"><small style="display:block; font-size:9px;">ZD</small><strong>${r.zd}</strong></div>
+                    <div style="background: #f1f5f9; padding: 5px; border-radius: 4px;"><small style="display:block; font-size:9px;">CONV</small><strong>${r.conv}</strong></div>
+                </div>
+                ${r.notas !== "0" && r.notas !== "NO APLICA" ? `<div style="background-color: #fff3cd; padding: 8px; font-size: 11px; color: #664d03; border-radius: 4px;"><strong>Nota:</strong> ${r.notas}</div>` : ''}
             </div>
-            ${r.notas !== "0" ? `<div style="margin-top:8px; padding:5px; font-size:11px; background:#fff3cd;"><strong>Nota:</strong> ${r.notas}</div>` : ''}
         </div>`;
     });
 }
 </script>
+
+</body>
+</html>
