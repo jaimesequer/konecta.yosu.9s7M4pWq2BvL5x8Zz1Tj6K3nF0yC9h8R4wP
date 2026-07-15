@@ -1,0 +1,39 @@
+Plantilla Redes Particulares
+
+Cambiar nombre #ReportePagoProveedor 
+
+Cambiar por  ##PagoProveedorRedParticular
+
+
+********************************************
+
+Es necesario habilitar la opción de Múltiples Opciones, debido que en ocasiones se cancela dos servicios en un mismo expediente. 
+
+************************************************
+Incompleta**
+
+- Dejar el registro en Sara en el módulo de novedades en la opción línea –Incompleta gestionada.
+
+- cambiar el estado del servicio desde asistencia según corresponda
+
+- Cuando un proveedor reporta que realizo el cambio del estado a incompleto
+
+
+- Por error, pero aún se encuentra en la prestación del servicio, el asesor de monitoreo que toma
+la novedad, debe dejar bien documentado el servicio y generarle una no disponibilidad en click
+al técnico que tiene asignado el servicio por el tiempo que va a durar la prestación del mismo
+
+
+- Si en el acompañamiento al asegurado él expresa molestia, disgusto o inconformidad por el retraso en la prestación del servicio, el representante debe realizar el marco de actuación de salvar la experiencia según su rol, si no se cuenta con más soluciones de cara al asegurado y sigue manifestando su inconformidad, se debe activar la alarma del Gestor de Salvando la Experiencia y marcar en SARA el expediente como Alertamiento de posible queja.
+
+ 
+- NOTA: Cancelación de servicios por parte del recurso propio : 
+
+
+El representante que toma la solicitud de cancelación debe de realizar la documentación correspondiente en la bitácora del expediente, dejando la información completa, clara y detallada de la justificación de la cancelación del servicio que informa el recurso propio, incluyendo como mínimo la siguiente información:
+
+
+Motivo específico por el cual el servicio no es requerido.
+Evidencia o descripción clara de la verificación realizada en sitio.
+Hora y lugar de la atención.
+Datos relevantes del caso que respalden la decisión de cancelación.
