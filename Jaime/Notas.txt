@@ -35,3 +35,7 @@ https://nik.grupokonecta.co:7070/#/app/articles/18466
 - Se agrego enlace de fotograficas proveedores.
 - Se agregó funcion de que al colocar que si en guardianes, que salga lo de marcar guardianes
 
+
+
+
+https://www.runapps.org/run_localc.php
