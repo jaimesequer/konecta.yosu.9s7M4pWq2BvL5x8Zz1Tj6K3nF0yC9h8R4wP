@@ -29,3 +29,9 @@ R// Este tipo de solicitudes de le deben de escalar es al Auxiliar técnico de s
 https://nik.grupokonecta.co:7070/#/app/articles/18466
 
 ---------------------------
+
+
+- Se solucionó palabras de error; Message
+- Se agrego enlace de fotograficas proveedores.
+- Se agregó funcion de que al colocar que si en guardianes, que salga lo de marcar guardianes
+
