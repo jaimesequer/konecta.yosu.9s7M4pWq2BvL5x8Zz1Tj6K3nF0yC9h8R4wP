@@ -14071,7 +14071,7 @@ function copiarLlamada() {
 
 
 
-	<style>
+<style>
     body { 
         background-image: url("Suraa.png"); 
         background-size: cover; 
@@ -14079,7 +14079,7 @@ function copiarLlamada() {
         background-repeat: no-repeat; 
         background-attachment: fixed; 
     }
-    
+<img src="suraa.png" style="mix-blend-mode: multiply; width: 100%; opacity: 0.8;">
     .container, .info-section { 
         background: rgba(255, 255, 255, 0.9); 
         padding: 20px; 
@@ -14088,100 +14088,50 @@ function copiarLlamada() {
     }
 
     html { scroll-behavior: smooth; }
-
-    /* ESTILOS DEL MENÚ DESPLEGABLE DE SUGERENCIAS */
-    .sugerencias-container {
-        position: fixed;
-        bottom: 25px;
-        right: 25px;
-        z-index: 1000;
-    }
-
-    .sugerencias-menu {
-        display: none;
-        position: absolute;
-        bottom: 110%;
-        right: 0;
-        background-color: #ffffff;
-        min-width: 260px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        border-radius: 12px;
-        padding: 8px 0;
-        z-index: 1001;
-    }
-
-    .sugerencias-menu.active {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .sugerencia-opcion {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 16px;
-        color: #333333;
-        text-decoration: none;
-        font-size: 0.9em;
-        font-weight: 500;
-        transition: background-color 0.2s ease;
-    }
-
-    .sugerencia-opcion:hover {
-        background-color: #f0f4f9;
-        color: #0d6efd;
-    }
-
-    .sugerencia-opcion i {
-        font-size: 1.1em;
-        color: #0d6efd;
-    }
-
-    .whatsapp-btn {
-        background-color: #25d366;
-        color: #fff;
-        padding: 12px 20px;
-        border-radius: 50px;
-        display: flex;
-        align-items: center;
-        text-decoration: none;
-        font-family: Arial, sans-serif;
-        font-weight: bold;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        transition: 0.3s;
-        border: none;
-        cursor: pointer;
-    }
-
-    .whatsapp-btn:hover {
-        transform: translateY(-5px);
-        background-color: #128c7e;
-    }
-
-    .whatsapp-btn img, .whatsapp-btn i {
-        width: 25px;
-        height: 25px;
-        margin-right: 10px;
-    }
-
-    @media (max-width: 600px) {
-        .whatsapp-btn span { display: none; }
-        .whatsapp-btn { padding: 15px; border-radius: 50%; }
-        .whatsapp-btn img, .whatsapp-btn i { margin-right: 0; }
-    }
+.whatsapp-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #25d366;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 1000;
+    transition: 0.3s;
+}
+.whatsapp-btn:hover {
+    transform: translateY(-5px);
+    background-color: #128c7e;
+}
+.whatsapp-btn img {
+    width: 25px;
+    height: 25px;
+    margin-right: 10px;
+}
+@media (max-width: 600px) {
+    .whatsapp-btn span { display: none; }
+    .whatsapp-btn { padding: 15px; border-radius: 50%; }
+    .whatsapp-btn img { margin-right: 0; }
+}
 </style>
+</p>
+    </div>
 
-<img src="suraa.png" style="mix-blend-mode: multiply; width: 100%; opacity: 0.8;">
 
+</div>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Página Estilo SURA</title>
-    
-    <!-- Librería FontAwesome para iconos -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+ 
 
     <style>
         body {
@@ -14199,27 +14149,28 @@ function copiarLlamada() {
             -webkit-backdrop-filter: blur(5px);
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        nav { 
-            background: rgba(0, 40, 132, 0.95); 
-            position: fixed; 
-            top: 0; 
-            left: 0;
-            width: 100%;
-            z-index: 9999; 
-            
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            
-            height: 50px; 
+nav { 
+    background: rgba(0, 40, 132, 0.95); 
+    position: fixed; 
+    top: 0; 
+    left: 0;
+    width: 100%;
+    z-index: 9999; 
+    
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    
+    height: 50px; 
+}
         }
-        nav ul { 
-            display: flex; 
-            list-style: none;
-            margin: 0; 
-            padding: 0; 
-            width: auto; 
-        }
+nav ul { 
+    display: flex; 
+    list-style: none;
+    margin: 0; 
+    padding: 0; 
+    width: auto; 
+}
         nav a {
             color: white;
             padding: 15px 20px;
@@ -14229,6 +14180,29 @@ function copiarLlamada() {
         }
         nav a:hover {
             background: rgba(255, 255, 255, 0.1);
+        }
+        .whatsapp-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background-color: #25d366;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            transition: transform 0.3s;
+        }
+        .whatsapp-btn:hover {
+            transform: scale(1.1);
+        }
+        .whatsapp-btn i {
+            font-size: 22px;
+            margin-right: 10px;
         }
         .nik-btn {
             position: fixed;
@@ -14251,59 +14225,23 @@ function copiarLlamada() {
             transform: translateY(-5px);
             box-shadow: 0 6px 20px rgba(0, 51, 160, 0.6);
         }
+        @media (max-width: 600px) {
+            .whatsapp-btn span { display: none; }
+            .whatsapp-btn { padding: 15px; border-radius: 50%; }
+            .whatsapp-btn i { margin: 0; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- Botón NIK -->
     <a href="https://nik.grupokonecta.co:7070/" class="nik-btn" target="_blank">
         NIK
     </a>
 
-    <!-- Botón Sugerencias con menú desplegable -->
-    <div class="sugerencias-container">
-        <button type="button" class="whatsapp-btn" id="btn-sugerencias">
-            <i class="fab fa-whatsapp"></i>
-            <span>Sugerencias</span>
-        </button>
-
-        <div class="sugerencias-menu" id="menu-sugerencias">
-            <a href="https://forms.office.com/r/sNZDM1uU9e" target="_blank" class="sugerencia-opcion">
-                <i class="fas fa-paper-plane"></i>
-                <span>Enviar una nueva sugerencia</span>
-            </a>
-            <a href="https://jaimesequer.github.io/konecta.yosu.9s7M4pWq2BvL5x8Zz1Tj6K3nF0yC9h8R4wP/Estados.html" class="sugerencia-opcion">
-                <i class="fas fa-tasks"></i>
-                <span>Ver el estado de mi sugerencia</span>
-            </a>
-        </div>
-    </div>
-
-    <!-- Script para la interacción del menú -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const btnSugerencias = document.getElementById('btn-sugerencias');
-            const menuSugerencias = document.getElementById('menu-sugerencias');
-
-            btnSugerencias.addEventListener('click', (e) => {
-                e.stopPropagation();
-                menuSugerencias.classList.toggle('active');
-            });
-
-            document.addEventListener('click', (e) => {
-                if (!menuSugerencias.contains(e.target) && e.target !== btnSugerencias) {
-                    menuSugerencias.classList.remove('active');
-                }
-            });
-
-            const opciones = menuSugerencias.querySelectorAll('.sugerencia-opcion');
-            opciones.forEach(opcion => {
-                opcion.addEventListener('click', () => {
-                    menuSugerencias.classList.remove('active');
-                });
-            });
-        });
-    </script>
+    <a href="https://forms.office.com/r/sNZDM1uU9e" class="whatsapp-btn" target="_blank">
+        <i class="fab fa-whatsapp"></i>
+        <span>Sugerencias</span>
+    </a>
 
 </body>
 </html>
