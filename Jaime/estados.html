@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Estados de Sugerencias</title>
 
-  <!-- Librería PapaParse -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -42,6 +39,7 @@
       padding: 14px 16px;
       text-align: left;
       border-bottom: 1px solid #eef2f5;
+      vertical-align: middle;
     }
 
     th {
@@ -54,13 +52,68 @@
     }
 
     tr:hover { background-color: #f8f9fa; }
+
+    /* ESTILOS PARA LA COLUMNA C (ESTADOS) */
+    .badge-status {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 0.85em;
+      text-align: center;
+    }
+
+    .estado-leido {
+      background-color: #ffecb3;
+      color: #856404;
+    }
+
+    .estado-en-ejecucion {
+      background-color: #ffe0b2;
+      color: #e65100;
+    }
+
+    .estado-finalizado {
+      background-color: #c8e6c9;
+      color: #1b5e20;
+    }
+
+    .estado-descartado {
+      background-color: #ffcdd2;
+      color: #b71c1c;
+    }
+
+    /* ESTILOS PARA LA COLUMNA G (TEXTO RECORTADO / LEER MÁS) */
+    .texto-recortado {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 250px;
+      display: block;
+    }
+
+    .texto-completo {
+      white-space: normal;
+      word-break: break-word;
+      display: block;
+    }
+
+    .btn-leer-mas {
+      color: #0d6efd;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.8em;
+      margin-top: 4px;
+      display: inline-block;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
 
   <h1>Estados de Sugerencias</h1>
   <p class="info">Listado de sugerencias en seguimiento (Columnas A - H).</p>
-  <div class="status-bar" id="ultimo-registro">Conectando...</div>
+  <div class="status-bar" id="ultimo-registro">Cargando datos...</div>
 
   <table id="tabla-sugerencias">
     <thead>
@@ -73,61 +126,108 @@
     const ID_DOC = '13acbMD8c-OO8aMIz6Tiuf2kJAxwcxO6J5ymKp6LYHnY';
     const GID_HOJA = '165722301';
     
-    // Endpoint directo a la hoja
-    const URL_CSV = `https://docs.google.com/spreadsheets/d/${ID_DOC}/gviz/tq?tqx=out:csv&gid=${GID_HOJA}`;
+    const URL_GVIZ = `https://docs.google.com/spreadsheets/d/${ID_DOC}/gviz/tq?tq=SELECT%20A,B,C,D,E,F,G,H&gid=${GID_HOJA}`;
 
-    async function cargarSugerencias() {
-      try {
-        const respuesta = await fetch(URL_CSV, { cache: 'no-cache' });
-        if (!respuesta.ok) throw new Error("Error en la petición");
-
-        const textoCSV = await respuesta.text();
-
-        Papa.parse(textoCSV, {
-          header: true,
-          skipEmptyLines: true,
-          complete: function(results) {
-            // Tomamos únicamente las primeras 8 columnas (de la A a la H)
-            const columnasFiltradas = results.meta.fields.slice(0, 8);
-            
-            renderizarTabla(results.data, columnasFiltradas);
-            
-            const horaActual = new Date().toLocaleTimeString();
-            document.getElementById('ultimo-registro').innerText = 
-              `Sincronizado a las ${horaActual} (Actualización cada 5s)`;
-          }
+    function cargarSugerencias() {
+      fetch(URL_GVIZ)
+        .then(res => res.text())
+        .then(rep => {
+          const jsonText = rep.substring(rep.indexOf('{'), rep.lastIndexOf('}') + 1);
+          const data = JSON.parse(jsonText);
+          
+          renderizarTablaGViz(data.table);
+          
+          const horaActual = new Date().toLocaleTimeString();
+          document.getElementById('ultimo-registro').innerText = 
+            `Sincronizado a las ${horaActual} (Actualización cada 5s)`;
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('ultimo-registro').innerText = 'Error al cargar datos.';
         });
-
-      } catch (error) {
-        console.error('Error:', error);
-        document.getElementById('ultimo-registro').innerText = 
-          'Error al actualizar los datos. Verifica la publicación del documento.';
-      }
     }
 
-    function renderizarTabla(datos, columnas) {
+    function renderizarTablaGViz(tablaData) {
       const filaEncabezados = document.getElementById('encabezados');
       const cuerpoTabla = document.getElementById('cuerpo-tabla');
 
-      // Crear los encabezados de la A a la H solo una vez
-      if (filaEncabezados.children.length === 0 && columnas) {
-        columnas.forEach(col => {
+      // 1. Renderizar Encabezados
+      if (filaEncabezados.children.length === 0) {
+        tablaData.cols.forEach(col => {
           const th = document.createElement('th');
-          th.textContent = col;
+          th.textContent = col.label || col.id;
           filaEncabezados.appendChild(th);
         });
       }
 
-      // Limpiar y renderizar filas
+      // 2. Renderizar Filas
       cuerpoTabla.innerHTML = '';
-
-      datos.forEach(fila => {
+      tablaData.rows.forEach(row => {
         const tr = document.createElement('tr');
-        columnas.forEach(col => {
+        
+        row.c.forEach((cell, indexColumna) => {
           const td = document.createElement('td');
-          td.textContent = fila[col] || '';
+          const valor = cell ? (cell.v !== null ? String(cell.v) : '') : '';
+
+          // COLUMNA C (Índice 2): ESTADOS CON COLORES
+          if (indexColumna === 2) {
+            const spanStatus = document.createElement('span');
+            spanStatus.classList.add('badge-status');
+            
+            const valorLimpio = valor.trim().toLowerCase();
+
+            if (valorLimpio === 'leído' || valorLimpio === 'leido') {
+              spanStatus.classList.add('estado-leido');
+            } else if (valorLimpio === 'en ejecución' || valorLimpio === 'en ejecucion') {
+              spanStatus.classList.add('estado-en-ejecucion');
+            } else if (valorLimpio === 'finalizado') {
+              spanStatus.classList.add('estado-finalizado');
+            } else if (valorLimpio === 'descartado') {
+              spanStatus.classList.add('estado-descartado');
+            }
+
+            spanStatus.textContent = valor || '-';
+            td.appendChild(spanStatus);
+
+          // COLUMNA G (Índice 6): "LEER MÁS" SI EL TEXTO ES LARGO
+          } else if (indexColumna === 6) {
+            const contenedorTexto = document.createElement('div');
+            
+            // Si el texto tiene más de 45 caracteres, se recorta a 1 sola línea
+            if (valor.length > 45) {
+              contenedorTexto.classList.add('texto-recortado');
+              contenedorTexto.textContent = valor;
+
+              const btnLeerMas = document.createElement('span');
+              btnLeerMas.classList.add('btn-leer-mas');
+              btnLeerMas.textContent = 'Leer más';
+
+              btnLeerMas.onclick = function() {
+                if (contenedorTexto.classList.contains('texto-recortado')) {
+                  contenedorTexto.classList.remove('texto-recortado');
+                  contenedorTexto.classList.add('texto-completo');
+                  btnLeerMas.textContent = 'Leer menos';
+                } else {
+                  contenedorTexto.classList.remove('texto-completo');
+                  contenedorTexto.classList.add('texto-recortado');
+                  btnLeerMas.textContent = 'Leer más';
+                }
+              };
+
+              td.appendChild(contenedorTexto);
+              td.appendChild(btnLeerMas);
+            } else {
+              td.textContent = valor;
+            }
+
+          // RESTO DE COLUMNAS
+          } else {
+            td.textContent = valor;
+          }
+
           tr.appendChild(td);
         });
+
         cuerpoTabla.appendChild(tr);
       });
     }
