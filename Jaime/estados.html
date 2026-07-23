@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Estados de Sugerencias</title>
 
+  <!-- Carga de Google Charts API -->
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -13,28 +16,65 @@
       color: #333;
     }
 
-    /* TÍTULO CENTRADO Y MÁS GRANDE */
-    h1 { 
-      color: #1a252f; 
-      margin-bottom: 5px; 
-      text-align: center;
-      font-size: 2.5em;
+    h1 { color: #1a252f; margin-bottom: 15px; }
+
+    /* ESTILOS DEL GRÁFICO DE TORTA */
+    #chart-container {
+      width: 100%;
+      max-width: 500px;
+      height: 280px;
+      margin-bottom: 20px;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      padding: 10px;
     }
 
-    .info { 
-      color: #666; 
-      font-size: 1em; 
-      margin-bottom: 25px; 
-      text-align: center;
+    /* BUSCADOR */
+    .search-container {
+      margin-bottom: 15px;
+    }
+
+    .search-input {
+      padding: 10px 16px;
+      width: 100%;
+      max-width: 320px;
+      border: 1px solid #ced4da;
+      border-radius: 20px;
+      font-size: 0.9em;
+      outline: none;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+      border-color: #0d6efd;
+      box-shadow: 0 2px 8px rgba(13, 110, 253, 0.25);
+    }
+
+    .status-bar {
+      display: inline-block;
+      padding: 6px 14px;
+      background-color: #e9ecef;
+      border-radius: 20px;
+      font-size: 0.85em;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+
+    /* CONTENEDOR DE TABLA PARA CABECERA FIJA */
+    .table-container {
+      max-height: 70vh;
+      overflow-y: auto;
+      background: #ffffff;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
     }
 
     table {
       width: 100%;
-      border-collapse: collapse;
-      background: #ffffff;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-      border-radius: 8px;
-      overflow: hidden;
+      border-collapse: separate;
+      border-spacing: 0;
     }
 
     th, td {
@@ -44,6 +84,7 @@
       vertical-align: middle;
     }
 
+    /* ENCABEZADOS CENTRADOS Y FIJOS (STICKY) */
     th {
       background-color: #0d6efd;
       color: #ffffff;
@@ -51,16 +92,16 @@
       text-transform: uppercase;
       font-size: 0.85em;
       letter-spacing: 0.5px;
+      text-align: center; /* Encabezados centrados */
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
     }
 
     tr:hover { background-color: #f8f9fa; }
 
-    /* COLUMNA C MÁS ANCHA */
-    th:nth-child(3), td:nth-child(3) {
-      min-width: 160px;
-    }
-
-    /* ESTILOS DE ESTADOS */
+    /* ESTILOS PARA LA COLUMNA C (ESTADOS) */
     .badge-status {
       display: inline-block;
       padding: 6px 12px;
@@ -68,8 +109,6 @@
       font-weight: bold;
       font-size: 0.85em;
       text-align: center;
-      width: 100%;
-      box-sizing: border-box;
     }
 
     .estado-leido {
@@ -92,7 +131,7 @@
       color: #b71c1c;
     }
 
-    /* COLUMNA G (TEXTO RECORTADO / LEER MÁS) */
+    /* ESTILOS PARA LA COLUMNA G (TEXTO RECORTADO Y CON SALTOS DE LÍNEA) */
     .texto-recortado {
       white-space: nowrap;
       overflow: hidden;
@@ -102,7 +141,7 @@
     }
 
     .texto-completo {
-      white-space: normal;
+      white-space: pre-line; /* Mantiene los saltos de línea */
       word-break: break-word;
       display: block;
     }
@@ -121,54 +160,67 @@
 <body>
 
   <h1>Estados de Sugerencias</h1>
-  <p class="info">Listado de sugerencias en seguimiento.</p>
 
-  <table id="tabla-sugerencias">
-    <thead>
-      <tr id="encabezados"></tr>
-    </thead>
-    <tbody id="cuerpo-tabla"></tbody>
-  </table>
+  <!-- Gráfico de Torta -->
+  <div id="chart-container"></div>
+
+  <!-- Cuadro de Búsqueda -->
+  <div class="search-container">
+    <input 
+      type="text" 
+      id="input-usuario" 
+      class="search-input" 
+      placeholder="Usuario de red" 
+      onkeyup="filtrarPorUsuario()"
+    >
+  </div>
+
+  <div class="status-bar" id="ultimo-registro">Cargando datos...</div>
+
+  <!-- Contenedor con Scroll para fijar los encabezados -->
+  <div class="table-container">
+    <table id="tabla-sugerencias">
+      <thead>
+        <tr id="encabezados"></tr>
+      </thead>
+      <tbody id="cuerpo-tabla"></tbody>
+    </table>
+  </div>
 
   <script>
     const ID_DOC = '13acbMD8c-OO8aMIz6Tiuf2kJAxwcxO6J5ymKp6LYHnY';
     const GID_HOJA = '165722301';
-    
     const URL_GVIZ = `https://docs.google.com/spreadsheets/d/${ID_DOC}/gviz/tq?tq=SELECT%20A,B,C,D,E,F,G,H&gid=${GID_HOJA}`;
 
-    // Variable global para mantener abierta SOLO una sugerencia a la vez
-    let sugerenciaAbiertaId = null;
+    let datosGlobales = null; // Guardar datos para redibujar al filtrar
 
-    function formatearFechaGoogle(valor) {
-      if (!valor) return '';
-      // Si viene con el formato Date(YYYY,M,D)
-      if (typeof valor === 'string' && valor.startsWith('Date(')) {
-        const partes = valor.replace('Date(', '').replace(')', '').split(',');
-        if (partes.length >= 3) {
-          const anio = partes[0].trim();
-          const mes = String(parseInt(partes[1].trim()) + 1).padStart(2, '0'); // Los meses en JS empiezan en 0
-          const dia = String(partes[2].trim()).padStart(2, '0');
-          return `${dia}/${mes}/${anio}`;
-        }
-      }
-      return valor;
-    }
+    // Cargar librería de gráficos
+    google.charts.load('current', {'packages':['corechart']});
 
     function cargarSugerencias() {
       fetch(URL_GVIZ)
         .then(res => res.text())
         .then(rep => {
           const jsonText = rep.substring(rep.indexOf('{'), rep.lastIndexOf('}') + 1);
-          const data = JSON.parse(jsonText);
+          datosGlobales = JSON.parse(jsonText).table;
           
-          renderizarTablaGViz(data.table);
+          renderizarTablaGViz(datosGlobales);
+           renderizarGraficoTorta(datosGlobales);
+          
+          const horaActual = new Date().toLocaleTimeString();
+          document.getElementById('ultimo-registro').innerText = 
+            `Sincronizado a las ${horaActual} (Actualización cada 5s)`;
         })
-        .catch(err => console.error(err));
+        .catch(err => {
+          console.error(err);
+          document.getElementById('ultimo-registro').innerText = 'Error al cargar datos.';
+        });
     }
 
     function renderizarTablaGViz(tablaData) {
       const filaEncabezados = document.getElementById('encabezados');
       const cuerpoTabla = document.getElementById('cuerpo-tabla');
+      const filtroUsuario = document.getElementById('input-usuario').value.trim().toLowerCase();
 
       // 1. Renderizar Encabezados
       if (filaEncabezados.children.length === 0) {
@@ -179,27 +231,25 @@
         });
       }
 
-      // 2. Invertir las filas para que lo último agregado aparezca de primero
-      const filasInvertidas = [...tablaData.rows].reverse();
-
-      // 3. Renderizar Filas
+      // 2. Renderizar Filas
       cuerpoTabla.innerHTML = '';
-      filasInvertidas.forEach((row, indexFila) => {
+      tablaData.rows.forEach(row => {
+        // Obtener usuario (Columna A - Índice 0)
+        const usuarioCol = row.c[0] ? String(row.c[0].v || '').toLowerCase() : '';
+        
+        // Si hay búsqueda y el usuario no coincide, omitir la fila
+        if (filtroUsuario && !usuarioCol.includes(filtroUsuario)) {
+          return;
+        }
+
         const tr = document.createElement('tr');
         
-        // Identificador único para cada fila
-        const idFila = row.c[0] ? String(row.c[0].v) : `fila-${indexFila}`;
-
         row.c.forEach((cell, indexColumna) => {
           const td = document.createElement('td');
-          let valor = cell ? (cell.v !== null ? (cell.f || String(cell.v)) : '') : '';
+          const valor = cell ? (cell.v !== null ? String(cell.v) : '') : '';
 
-          // COLUMNA B (Índice 1): FORMATO DE FECHA
-          if (indexColumna === 1) {
-            td.textContent = formatearFechaGoogle(cell ? cell.v : '');
-
-          // COLUMNA C (Índice 2): ESTADOS
-          } else if (indexColumna === 2) {
+          // COLUMNA C (Índice 2): ESTADOS CON COLORES
+          if (indexColumna === 2) {
             const spanStatus = document.createElement('span');
             spanStatus.classList.add('badge-status');
             
@@ -218,35 +268,36 @@
             spanStatus.textContent = valor || '-';
             td.appendChild(spanStatus);
 
-          // COLUMNA G (Índice 6): "LEER MÁS" ACCESIBLE Y PERSISTENTE
+          // COLUMNA G (Índice 6): TEXTO RECORTADO Y CON SALTOS DE LÍNEA
           } else if (indexColumna === 6) {
             const contenedorTexto = document.createElement('div');
             
             if (valor.length > 45) {
-              const estaAbierto = (sugerenciaAbiertaId === idFila);
-
-              contenedorTexto.classList.add(estaAbierto ? 'texto-completo' : 'texto-recortado');
+              contenedorTexto.classList.add('texto-recortado');
               contenedorTexto.textContent = valor;
 
               const btnLeerMas = document.createElement('span');
               btnLeerMas.classList.add('btn-leer-mas');
-              btnLeerMas.textContent = estaAbierto ? 'Leer menos' : 'Leer más';
+              btnLeerMas.textContent = 'Leer más';
 
               btnLeerMas.onclick = function() {
-                if (sugerenciaAbiertaId === idFila) {
-                  // Si le vuelve a dar click a la misma abierta, se cierra
-                  sugerenciaAbiertaId = null;
+                if (contenedorTexto.classList.contains('texto-recortado')) {
+                  contenedorTexto.classList.remove('texto-recortado');
+                  contenedorTexto.classList.add('texto-completo');
+                  btnLeerMas.textContent = 'Leer menos';
                 } else {
-                  // Si abre una nueva, reemplaza la abierta anterior
-                  sugerenciaAbiertaId = idFila;
+                  contenedorTexto.classList.remove('texto-completo');
+                  contenedorTexto.classList.add('texto-recortado');
+                  btnLeerMas.textContent = 'Leer más';
                 }
-                renderizarTablaGViz(tablaData); // Re-renderizar para actualizar estados
               };
 
               td.appendChild(contenedorTexto);
               td.appendChild(btnLeerMas);
             } else {
-              td.textContent = valor;
+              contenedorTexto.classList.add('texto-completo');
+              contenedorTexto.textContent = valor;
+              td.appendChild(contenedorTexto);
             }
 
           // RESTO DE COLUMNAS
@@ -261,8 +312,63 @@
       });
     }
 
-    cargarSugerencias();
-    setInterval(cargarSugerencias, 5000);
+    // FILTRO EN TIEMPO REAL
+    function filtrarPorUsuario() {
+      if (datosGlobales) {
+        renderizarTablaGViz(datosGlobales);
+      }
+    }
+
+    // RENDERICIÓN DEL GRÁFICO DE TORTA
+    function renderizarGraficoTorta(tablaData) {
+      if (!google.visualization) return;
+
+      const conteoEstados = {
+        'Leído': 0,
+        'En ejecución': 0,
+        'Finalizado': 0,
+        'Descartado': 0
+      };
+
+      // Contar ocurrencias por estado (Columna C - Índice 2)
+      tablaData.rows.forEach(row => {
+        if (row.c && row.c[2] && row.c[2].v) {
+          const val = String(row.c[2].v).trim().toLowerCase();
+          if (val === 'leído' || val === 'leido') conteoEstados['Leído']++;
+          else if (val === 'en ejecución' || val === 'en ejecucion') conteoEstados['En ejecución']++;
+          else if (val === 'finalizado') conteoEstados['Finalizado']++;
+          else if (val === 'descartado') conteoEstados['Descartado']++;
+        }
+      });
+
+      const dataArray = [
+        ['Estado', 'Cantidad'],
+        ['Leído', conteoEstados['Leído']],
+        ['En ejecución', conteoEstados['En ejecución']],
+        ['Finalizado', conteoEstados['Finalizado']],
+        ['Descartado', conteoEstados['Descartado']]
+      ];
+
+      const data = google.visualization.arrayToDataTable(dataArray);
+
+      // Colores exactos del CSS
+      const options = {
+        title: 'Distribución por Estado',
+        pieHole: 0.3,
+        colors: ['#ffecb3', '#ffe0b2', '#c8e6c9', '#ffcdd2'], 
+        chartArea: { width: '90%', height: '80%' },
+        legend: { position: 'right', alignment: 'center' }
+      };
+
+      const chart = new google.visualization.PieChart(document.getElementById('chart-container'));
+      chart.draw(data, options);
+    }
+
+    // Inicialización y refresco automático cada 5s
+    google.charts.setOnLoadCallback(() => {
+      cargarSugerencias();
+      setInterval(cargarSugerencias, 5000);
+    });
   </script>
 </body>
 </html>
