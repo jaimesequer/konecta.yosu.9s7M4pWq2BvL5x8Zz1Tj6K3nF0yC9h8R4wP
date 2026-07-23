@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estados de Sugerencias</title>
+
+  <!-- Librería PapaParse -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 40px;
+      background-color: #f4f6f8;
+      color: #333;
+    }
+
+    h1 { color: #1a252f; margin-bottom: 5px; }
+    .info { color: #666; font-size: 0.9em; margin-bottom: 15px; }
+
+    .status-bar {
+      display: inline-block;
+      padding: 6px 14px;
+      background-color: #e9ecef;
+      border-radius: 20px;
+      font-size: 0.85em;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #ffffff;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid #eef2f5;
+    }
+
+    th {
+      background-color: #0d6efd;
+      color: #ffffff;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.85em;
+      letter-spacing: 0.5px;
+    }
+
+    tr:hover { background-color: #f8f9fa; }
+  </style>
+</head>
+<body>
+
+  <h1>Estados de Sugerencias</h1>
+  <p class="info">Listado de sugerencias en seguimiento (Columnas A - H).</p>
+  <div class="status-bar" id="ultimo-registro">Conectando...</div>
+
+  <table id="tabla-sugerencias">
+    <thead>
+      <tr id="encabezados"></tr>
+    </thead>
+    <tbody id="cuerpo-tabla"></tbody>
+  </table>
+
+  <script>
+    const ID_DOC = '13acbMD8c-OO8aMIz6Tiuf2kJAxwcxO6J5ymKp6LYHnY';
+    const GID_HOJA = '165722301';
+    
+    // Endpoint directo a la hoja
+    const URL_CSV = `https://docs.google.com/spreadsheets/d/${ID_DOC}/gviz/tq?tqx=out:csv&gid=${GID_HOJA}`;
+
+    async function cargarSugerencias() {
+      try {
+        const respuesta = await fetch(URL_CSV, { cache: 'no-cache' });
+        if (!respuesta.ok) throw new Error("Error en la petición");
+
+        const textoCSV = await respuesta.text();
+
+        Papa.parse(textoCSV, {
+          header: true,
+          skipEmptyLines: true,
+          complete: function(results) {
+            // Tomamos únicamente las primeras 8 columnas (de la A a la H)
+            const columnasFiltradas = results.meta.fields.slice(0, 8);
+            
+            renderizarTabla(results.data, columnasFiltradas);
+            
+            const horaActual = new Date().toLocaleTimeString();
+            document.getElementById('ultimo-registro').innerText = 
+              `Sincronizado a las ${horaActual} (Actualización cada 5s)`;
+          }
+        });
+
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('ultimo-registro').innerText = 
+          'Error al actualizar los datos. Verifica la publicación del documento.';
+      }
+    }
+
+    function renderizarTabla(datos, columnas) {
+      const filaEncabezados = document.getElementById('encabezados');
+      const cuerpoTabla = document.getElementById('cuerpo-tabla');
+
+      // Crear los encabezados de la A a la H solo una vez
+      if (filaEncabezados.children.length === 0 && columnas) {
+        columnas.forEach(col => {
+          const th = document.createElement('th');
+          th.textContent = col;
+          filaEncabezados.appendChild(th);
+        });
+      }
+
+      // Limpiar y renderizar filas
+      cuerpoTabla.innerHTML = '';
+
+      datos.forEach(fila => {
+        const tr = document.createElement('tr');
+        columnas.forEach(col => {
+          const td = document.createElement('td');
+          td.textContent = fila[col] || '';
+          tr.appendChild(td);
+        });
+        cuerpoTabla.appendChild(tr);
+      });
+    }
+
+    cargarSugerencias();
+    setInterval(cargarSugerencias, 5000);
+  </script>
+</body>
+</html>
