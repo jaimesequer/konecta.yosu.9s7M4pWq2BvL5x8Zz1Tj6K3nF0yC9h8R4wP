@@ -16,29 +16,34 @@
       color: #333;
     }
 
-    h1 { color: #1a252f; margin-bottom: 15px; }
+    h1 { 
+      color: #1a252f; 
+      margin-bottom: 20px; 
+      text-align: center; /* Título centrado */
+    }
 
-    /* ESTILOS DEL GRÁFICO DE TORTA */
+    /* ESTILOS DEL GRÁFICO DE TORTA CENTRADO */
     #chart-container {
       width: 100%;
-      max-width: 500px;
-      height: 280px;
-      margin-bottom: 20px;
+      max-width: 550px;
+      height: 300px;
+      margin: 0 auto 25px auto; /* Centrado horizontal */
       background: #ffffff;
       border-radius: 8px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
       padding: 10px;
     }
 
-    /* BUSCADOR */
+    /* BUSCADOR CENTRADO */
     .search-container {
-      margin-bottom: 15px;
+      margin-bottom: 20px;
+      text-align: center;
     }
 
     .search-input {
       padding: 10px 16px;
       width: 100%;
-      max-width: 320px;
+      max-width: 350px;
       border: 1px solid #ced4da;
       border-radius: 20px;
       font-size: 0.9em;
@@ -52,19 +57,9 @@
       box-shadow: 0 2px 8px rgba(13, 110, 253, 0.25);
     }
 
-    .status-bar {
-      display: inline-block;
-      padding: 6px 14px;
-      background-color: #e9ecef;
-      border-radius: 20px;
-      font-size: 0.85em;
-      margin-bottom: 20px;
-      font-weight: 500;
-    }
-
     /* CONTENEDOR DE TABLA PARA CABECERA FIJA */
     .table-container {
-      max-height: 70vh;
+      max-height: 65vh;
       overflow-y: auto;
       background: #ffffff;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
@@ -92,7 +87,7 @@
       text-transform: uppercase;
       font-size: 0.85em;
       letter-spacing: 0.5px;
-      text-align: center; /* Encabezados centrados */
+      text-align: center;
       position: sticky;
       top: 0;
       z-index: 10;
@@ -141,7 +136,7 @@
     }
 
     .texto-completo {
-      white-space: pre-line; /* Mantiene los saltos de línea */
+      white-space: pre-line;
       word-break: break-word;
       display: block;
     }
@@ -161,10 +156,10 @@
 
   <h1>Estados de Sugerencias</h1>
 
-  <!-- Gráfico de Torta -->
+  <!-- Gráfico de Torta Centrado -->
   <div id="chart-container"></div>
 
-  <!-- Cuadro de Búsqueda -->
+  <!-- Cuadro de Búsqueda Centrado -->
   <div class="search-container">
     <input 
       type="text" 
@@ -174,8 +169,6 @@
       onkeyup="filtrarPorUsuario()"
     >
   </div>
-
-  <div class="status-bar" id="ultimo-registro">Cargando datos...</div>
 
   <!-- Contenedor con Scroll para fijar los encabezados -->
   <div class="table-container">
@@ -192,9 +185,9 @@
     const GID_HOJA = '165722301';
     const URL_GVIZ = `https://docs.google.com/spreadsheets/d/${ID_DOC}/gviz/tq?tq=SELECT%20A,B,C,D,E,F,G,H&gid=${GID_HOJA}`;
 
-    let datosGlobales = null; // Guardar datos para redibujar al filtrar
+    let datosGlobales = null;
+    let filaExpandidaIndex = null; // Guarda el índice del elemento que el usuario decidió expandir
 
-    // Cargar librería de gráficos
     google.charts.load('current', {'packages':['corechart']});
 
     function cargarSugerencias() {
@@ -205,16 +198,26 @@
           datosGlobales = JSON.parse(jsonText).table;
           
           renderizarTablaGViz(datosGlobales);
-           renderizarGraficoTorta(datosGlobales);
-          
-          const horaActual = new Date().toLocaleTimeString();
-          document.getElementById('ultimo-registro').innerText = 
-            `Sincronizado a las ${horaActual} (Actualización cada 5s)`;
+          renderizarGraficoTorta(datosGlobales);
         })
         .catch(err => {
-          console.error(err);
-          document.getElementById('ultimo-registro').innerText = 'Error al cargar datos.';
+          console.error('Error al cargar datos:', err);
         });
+    }
+
+    // FORMATEAR FECHA DESDE Date(AAAA,M,D) O FORMATO DE TEXTO
+    function formatearFecha(valor) {
+      if (!valor) return '';
+      if (typeof valor === 'string' && valor.startsWith('Date(')) {
+        const partes = valor.replace('Date(', '').replace(')', '').split(',');
+        if (partes.length >= 3) {
+          const anio = partes[0].trim();
+          const mes = String(parseInt(partes[1].trim()) + 1).padStart(2, '0'); // Los meses en JS empiezan en 0
+          const dia = String(partes[2].trim()).padStart(2, '0');
+          return `${dia}/${mes}/${anio}`;
+        }
+      }
+      return valor;
     }
 
     function renderizarTablaGViz(tablaData) {
@@ -233,11 +236,9 @@
 
       // 2. Renderizar Filas
       cuerpoTabla.innerHTML = '';
-      tablaData.rows.forEach(row => {
-        // Obtener usuario (Columna A - Índice 0)
+      tablaData.rows.forEach((row, indexFila) => {
         const usuarioCol = row.c[0] ? String(row.c[0].v || '').toLowerCase() : '';
         
-        // Si hay búsqueda y el usuario no coincide, omitir la fila
         if (filtroUsuario && !usuarioCol.includes(filtroUsuario)) {
           return;
         }
@@ -246,10 +247,15 @@
         
         row.c.forEach((cell, indexColumna) => {
           const td = document.createElement('td');
-          const valor = cell ? (cell.v !== null ? String(cell.v) : '') : '';
+          let valor = cell ? (cell.v !== null ? String(cell.v) : '') : '';
+
+          // COLUMNA B (Índice 1): FORMATEO DE FECHA
+          if (indexColumna === 1) {
+            valor = cell && cell.f ? cell.f : formatearFecha(valor);
+            td.textContent = valor;
 
           // COLUMNA C (Índice 2): ESTADOS CON COLORES
-          if (indexColumna === 2) {
+          } else if (indexColumna === 2) {
             const spanStatus = document.createElement('span');
             spanStatus.classList.add('badge-status');
             
@@ -268,28 +274,31 @@
             spanStatus.textContent = valor || '-';
             td.appendChild(spanStatus);
 
-          // COLUMNA G (Índice 6): TEXTO RECORTADO Y CON SALTOS DE LÍNEA
+          // COLUMNA G (Índice 6): "LEER MÁS" PERSISTENTE Y SALTOS DE LÍNEA
           } else if (indexColumna === 6) {
             const contenedorTexto = document.createElement('div');
             
             if (valor.length > 45) {
-              contenedorTexto.classList.add('texto-recortado');
+              const estaExpandido = (filaExpandidaIndex === indexFila);
+              
+              if (estaExpandido) {
+                contenedorTexto.classList.add('texto-completo');
+              } else {
+                contenedorTexto.classList.add('texto-recortado');
+              }
               contenedorTexto.textContent = valor;
 
               const btnLeerMas = document.createElement('span');
               btnLeerMas.classList.add('btn-leer-mas');
-              btnLeerMas.textContent = 'Leer más';
+              btnLeerMas.textContent = estaExpandido ? 'Leer menos' : 'Leer más';
 
               btnLeerMas.onclick = function() {
-                if (contenedorTexto.classList.contains('texto-recortado')) {
-                  contenedorTexto.classList.remove('texto-recortado');
-                  contenedorTexto.classList.add('texto-completo');
-                  btnLeerMas.textContent = 'Leer menos';
+                if (filaExpandidaIndex === indexFila) {
+                  filaExpandidaIndex = null; // Cierra si se hace clic en el mismo
                 } else {
-                  contenedorTexto.classList.remove('texto-completo');
-                  contenedorTexto.classList.add('texto-recortado');
-                  btnLeerMas.textContent = 'Leer más';
+                  filaExpandidaIndex = indexFila; // Expande este y cierra los demás
                 }
+                renderizarTablaGViz(datosGlobales);
               };
 
               td.appendChild(contenedorTexto);
@@ -312,14 +321,13 @@
       });
     }
 
-    // FILTRO EN TIEMPO REAL
     function filtrarPorUsuario() {
       if (datosGlobales) {
         renderizarTablaGViz(datosGlobales);
       }
     }
 
-    // RENDERICIÓN DEL GRÁFICO DE TORTA
+    // GRÁFICO CON COLORES NÍTIDOS Y PORCENTAJES VISIBLES
     function renderizarGraficoTorta(tablaData) {
       if (!google.visualization) return;
 
@@ -330,7 +338,6 @@
         'Descartado': 0
       };
 
-      // Contar ocurrencias por estado (Columna C - Índice 2)
       tablaData.rows.forEach(row => {
         if (row.c && row.c[2] && row.c[2].v) {
           const val = String(row.c[2].v).trim().toLowerCase();
@@ -351,20 +358,25 @@
 
       const data = google.visualization.arrayToDataTable(dataArray);
 
-      // Colores exactos del CSS
+      // Colores sólidos para mayor visibilidad y legibilidad del porcentaje
       const options = {
         title: 'Distribución por Estado',
-        pieHole: 0.3,
-        colors: ['#ffecb3', '#ffe0b2', '#c8e6c9', '#ffcdd2'], 
-        chartArea: { width: '90%', height: '80%' },
-        legend: { position: 'right', alignment: 'center' }
+        pieHole: 0.35,
+        colors: ['#fbc02d', '#f57c00', '#388e3c', '#d32f2f'], // Amarillo, Naranja, Verde, Rojo vívidos
+        chartArea: { width: '85%', height: '80%' },
+        legend: { position: 'right', alignment: 'center' },
+        pieSliceTextStyle: {
+          color: '#ffffff',
+          fontSize: 13,
+          bold: true
+        }
       };
 
       const chart = new google.visualization.PieChart(document.getElementById('chart-container'));
       chart.draw(data, options);
     }
 
-    // Inicialización y refresco automático cada 5s
+    // Inicialización y sincronización en segundo plano cada 5 segundos
     google.charts.setOnLoadCallback(() => {
       cargarSugerencias();
       setInterval(cargarSugerencias, 5000);
