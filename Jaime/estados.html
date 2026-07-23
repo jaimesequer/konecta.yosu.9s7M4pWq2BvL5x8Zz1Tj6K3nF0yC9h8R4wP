@@ -79,6 +79,11 @@
       vertical-align: middle;
     }
 
+    /* AJUSTE LEVE DE ANCHO PARA LA COLUMNA C (3ra columna) */
+    td:nth-child(3), th:nth-child(3) {
+      min-width: 140px;
+    }
+
     /* ENCABEZADOS CENTRADOS Y FIJOS (STICKY) */
     th {
       background-color: #0d6efd;
@@ -234,9 +239,13 @@
         });
       }
 
-      // 2. Renderizar Filas
+      // 2. Renderizar Filas (Invertidas: de abajo hacia arriba)
       cuerpoTabla.innerHTML = '';
-      tablaData.rows.forEach((row, indexFila) => {
+      const filasInvertidas = [...tablaData.rows].reverse();
+
+      filasInvertidas.forEach((row, idxInvertido) => {
+        // Mantenemos el índice original para no romper el "Leer más"
+        const indexFila = tablaData.rows.length - 1 - idxInvertido;
         const usuarioCol = row.c[0] ? String(row.c[0].v || '').toLowerCase() : '';
         
         if (filtroUsuario && !usuarioCol.includes(filtroUsuario)) {
