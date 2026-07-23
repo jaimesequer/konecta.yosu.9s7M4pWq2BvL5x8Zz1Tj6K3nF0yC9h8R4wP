@@ -57,10 +57,8 @@
       box-shadow: 0 2px 8px rgba(13, 110, 253, 0.25);
     }
 
-    /* CONTENEDOR DE TABLA PARA CABECERA FIJA */
+    /* CONTENEDOR DE TABLA (Permite scroll libre en toda la página) */
     .table-container {
-      max-height: 65vh;
-      overflow-y: auto;
       background: #ffffff;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
       border-radius: 8px;
@@ -84,7 +82,7 @@
       min-width: 140px;
     }
 
-    /* ENCABEZADOS CENTRADOS Y FIJOS (STICKY) */
+    /* ENCABEZADOS CENTRADOS Y FIJOS (STICKY AL NAVEGADOR) */
     th {
       background-color: #0d6efd;
       color: #ffffff;
@@ -175,7 +173,7 @@
     >
   </div>
 
-  <!-- Contenedor con Scroll para fijar los encabezados -->
+  <!-- Contenedor de Tabla -->
   <div class="table-container">
     <table id="tabla-sugerencias">
       <thead>
