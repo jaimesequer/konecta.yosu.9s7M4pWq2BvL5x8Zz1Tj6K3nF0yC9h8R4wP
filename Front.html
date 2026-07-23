@@ -14133,6 +14133,20 @@ function copiarLlamada() {
     <title>Página Estilo SURA</title>
  
 
+
+
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página Estilo SURA</title>
+    
+    <!-- Librería FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
     <style>
         body {
             margin: 0;
@@ -14140,37 +14154,27 @@ function copiarLlamada() {
             background-color: #f4f7f9;
             height: 2000px; 
         }
-        header { 
-            background: rgba(0, 51, 160, 0.85); 
-            color: #ffffff;      
-            padding: 60px 20px;  
-            text-align: center;
-            backdrop-filter: blur(5px); 
-            -webkit-backdrop-filter: blur(5px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+
+        /* Navegación Superior */
+        nav { 
+            background: rgba(0, 40, 132, 0.95); 
+            position: fixed; 
+            top: 0; 
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 50px; 
+            backdrop-filter: blur(5px);
         }
-nav { 
-    background: rgba(0, 40, 132, 0.95); 
-    position: fixed; 
-    top: 0; 
-    left: 0;
-    width: 100%;
-    z-index: 9999; 
-    
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    
-    height: 50px; 
-}
+        nav ul { 
+            display: flex; 
+            list-style: none;
+            margin: 0; 
+            padding: 0; 
         }
-nav ul { 
-    display: flex; 
-    list-style: none;
-    margin: 0; 
-    padding: 0; 
-    width: auto; 
-}
         nav a {
             color: white;
             padding: 15px 20px;
@@ -14181,29 +14185,8 @@ nav ul {
         nav a:hover {
             background: rgba(255, 255, 255, 0.1);
         }
-        .whatsapp-btn {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            background-color: #25d366;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 50px;
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            z-index: 1000;
-            transition: transform 0.3s;
-        }
-        .whatsapp-btn:hover {
-            transform: scale(1.1);
-        }
-        .whatsapp-btn i {
-            font-size: 22px;
-            margin-right: 10px;
-        }
+
+        /* BOTÓN NIK */
         .nik-btn {
             position: fixed;
             bottom: 25px;
@@ -14216,7 +14199,7 @@ nav ul {
             font-weight: 900;
             text-transform: uppercase;
             box-shadow: 0 4px 15px rgba(0, 51, 160, 0.4);
-            z-index: 1000;
+            z-index: 1001;
             transition: all 0.3s ease;
             border: 1px solid rgba(255,255,255,0.2);
         }
@@ -14225,26 +14208,172 @@ nav ul {
             transform: translateY(-5px);
             box-shadow: 0 6px 20px rgba(0, 51, 160, 0.6);
         }
+
+        /* MENÚ DESPLEGABLE DE SUGERENCIAS (A LA IZQUIERDA) */
+        .sugerencias-container {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+        }
+
+        .sugerencias-trigger-btn {
+            background-color: #25d366;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: none;
+            cursor: pointer;
+            transition: transform 0.3s, background-color 0.3s;
+            z-index: 2; /* Siempre encima de las opciones desplegadas */
+        }
+        .sugerencias-trigger-btn:hover {
+            transform: scale(1.05);
+            background-color: #128c7e;
+        }
+
+        .sugerencias-trigger-btn i {
+            font-size: 22px;
+            margin-right: 10px;
+        }
+
+        /* MENÚ QUE DESPLIEGA HACIA LA IZQUIERDA */
+        .sugerencias-menu {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(20px); /* Nace desde la derecha hacia la izquierda */
+            position: absolute;
+            right: calc(100% + 12px); /* Se posiciona a la izquierda del botón */
+            top: 50%;
+            transform: translateY(-50%) translateX(20px); /* Centrado vertical con respecto al botón */
+            background-color: #ffffff;
+            min-width: 270px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 8px 0;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            white-space: nowrap; /* Mantiene el texto alineado */
+        }
+
+        .sugerencias-menu.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(-50%) translateX(0);
+            pointer-events: auto;
+        }
+
+        .sugerencia-opcion {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 18px;
+            color: #333333;
+            text-decoration: none;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        .sugerencia-opcion:hover {
+            background-color: #f0f4f9;
+            color: #0d6efd;
+        }
+
+        .sugerencia-opcion i {
+            font-size: 1.1em;
+            color: #0d6efd;
+        }
+
         @media (max-width: 600px) {
-            .whatsapp-btn span { display: none; }
-            .whatsapp-btn { padding: 15px; border-radius: 50%; }
-            .whatsapp-btn i { margin: 0; }
+            .sugerencias-trigger-btn span { display: none; }
+            .sugerencias-trigger-btn { padding: 15px; border-radius: 50%; }
+            .sugerencias-trigger-btn i { margin: 0; }
         }
     </style>
 </head>
 <body>
 
+
+    <!-- Botón NIK -->
     <a href="https://nik.grupokonecta.co:7070/" class="nik-btn" target="_blank">
         NIK
     </a>
 
-    <a href="https://forms.office.com/r/sNZDM1uU9e" class="whatsapp-btn" target="_blank">
-        <i class="fab fa-whatsapp"></i>
-        <span>Sugerencias</span>
-    </a>
+    <!-- ÚNICO BOTÓN DE SUGERENCIAS CON DESPLEGABLE A LA IZQUIERDA -->
+    <div class="sugerencias-container" id="container-sugerencias-main">
+        <button type="button" class="sugerencias-trigger-btn" id="btn-sugerencias-main">
+            <i class="fas fa-envelope"></i>
+            <span>Sugerencias</span>
+        </button>
+
+        <div class="sugerencias-menu" id="menu-sugerencias-main">
+            <a href="https://forms.office.com/r/sNZDM1uU9e" target="_blank" class="sugerencia-opcion">
+                <i class="fas fa-paper-plane"></i>
+                <span>Enviar una nueva sugerencia</span>
+            </a>
+            <a href="https://jaimesequer.github.io/konecta.yosu.9s7M4pWq2BvL5x8Zz1Tj6K3nF0yC9h8R4wP/Estados.html" target="_blank" class="sugerencia-opcion">
+                <i class="fas fa-tasks"></i>
+                <span>Ver el estado de mi sugerencia</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Script de interacción -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnSugerencias = document.getElementById('btn-sugerencias-main');
+            const menuSugerencias = document.getElementById('menu-sugerencias-main');
+            const containerSugerencias = document.getElementById('container-sugerencias-main');
+
+            if (btnSugerencias && menuSugerencias) {
+                
+                const toggleMenu = (e) => {
+                    e.stopPropagation();
+                    menuSugerencias.classList.toggle('active');
+                };
+
+                const closeMenu = () => {
+                    menuSugerencias.classList.remove('active');
+                };
+
+                btnSugerencias.addEventListener('click', toggleMenu);
+
+                document.addEventListener('click', (e) => {
+                    if (!containerSugerencias.contains(e.target)) {
+                        closeMenu();
+                    }
+                });
+            }
+        });
+    </script>
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
