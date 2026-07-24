@@ -30,11 +30,6 @@ https://nik.grupokonecta.co:7070/#/app/articles/18466
 
 ---------------------------
 
-22/07/2026
-- Se solucionó palabras de error; Message
-- Se agrego enlace de fotograficas proveedores.
-- Se agregó funcion de que al colocar que si en guardianes, que salga lo de marcar guardianes
-
 
 
 
